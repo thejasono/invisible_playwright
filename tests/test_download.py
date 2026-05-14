@@ -258,3 +258,120 @@ def test_ensure_binary_unsupported_platform_raises(monkeypatch):
     monkeypatch.setattr(platform, "machine", lambda: "AMD64")
     with pytest.raises(NotImplementedError, match="unsupported platform"):
         ensure_binary()
+
+
+# ──────────────────────────────────────────────────────────────────────
+#  Linux platform tests — exercise the tar.gz extraction path. Mirrors
+#  the Windows .zip tests above so both archive formats are covered.
+# ──────────────────────────────────────────────────────────────────────
+
+
+@pytest.mark.unit
+@responses.activate
+def test_ensure_binary_downloads_and_verifies_linux(tmp_path, monkeypatch):
+    """Linux happy path: tar.gz download → SHA256 check → extract → return path."""
+    cache = tmp_path / "cache"
+    monkeypatch.setattr("invisible_playwright.download.cache_root", lambda: cache)
+
+    archive_path = tmp_path / "archive.tar.gz"
+    archive_bytes = _make_targz(archive_path, "firefox", b"ELF!")
+    archive_sha = hashlib.sha256(archive_bytes).hexdigest()
+    from invisible_playwright.constants import ARCHIVE_NAME
+    asset = ARCHIVE_NAME("linux", "x86_64")
+
+    url_archive = f"https://github.com/feder-cr/invisible_playwright/releases/download/{BINARY_VERSION}/{asset}"
+    url_sums = f"https://github.com/feder-cr/invisible_playwright/releases/download/{BINARY_VERSION}/checksums.txt"
+
+    responses.add(responses.GET, url_archive, body=archive_bytes, status=200,
+                  content_type="application/gzip")
+    responses.add(responses.GET, url_sums,
+                  body=f"{archive_sha}  {asset}\n", status=200)
+
+    monkeypatch.setattr("sys.platform", "linux")
+    import platform
+    monkeypatch.setattr(platform, "machine", lambda: "x86_64")
+
+    path = ensure_binary()
+    assert Path(path).exists()
+    assert Path(path).name == "firefox"
+
+
+@pytest.mark.unit
+@responses.activate
+def test_ensure_binary_rejects_sha_mismatch_linux(tmp_path, monkeypatch):
+    """Linux SHA mismatch must raise — the tar.gz path runs the same
+    verifier as the .zip path, so a corrupted archive is rejected before
+    extraction regardless of platform."""
+    cache = tmp_path / "cache"
+    monkeypatch.setattr("invisible_playwright.download.cache_root", lambda: cache)
+    archive_path = tmp_path / "archive.tar.gz"
+    archive_bytes = _make_targz(archive_path, "firefox", b"ELF!")
+    wrong_sha = "0" * 64
+    from invisible_playwright.constants import ARCHIVE_NAME
+    asset = ARCHIVE_NAME("linux", "x86_64")
+
+    url_archive = f"https://github.com/feder-cr/invisible_playwright/releases/download/{BINARY_VERSION}/{asset}"
+    url_sums = f"https://github.com/feder-cr/invisible_playwright/releases/download/{BINARY_VERSION}/checksums.txt"
+    responses.add(responses.GET, url_archive, body=archive_bytes, status=200)
+    responses.add(responses.GET, url_sums, body=f"{wrong_sha}  {asset}\n", status=200)
+
+    monkeypatch.setattr("sys.platform", "linux")
+    import platform
+    monkeypatch.setattr(platform, "machine", lambda: "x86_64")
+
+    with pytest.raises(RuntimeError, match="SHA256"):
+        ensure_binary()
+
+
+@pytest.mark.unit
+def test_ensure_binary_cache_hit_skips_http_linux(tmp_path, monkeypatch):
+    """Linux cache hit short-circuits before any HTTP. Looks for the
+    ``firefox`` entry (not ``firefox.exe``) per ``BINARY_ENTRY_REL``."""
+    cache = tmp_path / "cache"
+    version_dir = cache / BINARY_VERSION
+    version_dir.mkdir(parents=True)
+    pre_cached = version_dir / "firefox"
+    pre_cached.write_text("cached-content")
+
+    monkeypatch.setattr("invisible_playwright.download.cache_root", lambda: cache)
+    monkeypatch.setattr("sys.platform", "linux")
+    import platform
+    monkeypatch.setattr(platform, "machine", lambda: "x86_64")
+
+    def _fail_get(*args, **kwargs):
+        raise AssertionError("HTTP must not be called on cache hit")
+    monkeypatch.setattr("invisible_playwright.download.requests.get", _fail_get)
+
+    path = ensure_binary()
+    assert path == pre_cached
+    assert path.read_text() == "cached-content"
+
+
+@pytest.mark.unit
+@responses.activate
+def test_ensure_binary_missing_entry_after_extract_raises_linux(tmp_path, monkeypatch):
+    """Linux post-extract sanity check: if the tar.gz lacks a ``firefox``
+    entry, raise rather than returning a non-existent path. Mirrors the
+    Windows test and guards against an upstream release artifact regression."""
+    cache = tmp_path / "cache"
+    monkeypatch.setattr("invisible_playwright.download.cache_root", lambda: cache)
+
+    archive_path = tmp_path / "archive.tar.gz"
+    # tar.gz without ``firefox`` inside
+    archive_bytes = _make_targz(archive_path, "other.bin", b"X")
+    archive_sha = hashlib.sha256(archive_bytes).hexdigest()
+    from invisible_playwright.constants import ARCHIVE_NAME
+    asset = ARCHIVE_NAME("linux", "x86_64")
+
+    url_archive = f"https://github.com/feder-cr/invisible_playwright/releases/download/{BINARY_VERSION}/{asset}"
+    url_sums = f"https://github.com/feder-cr/invisible_playwright/releases/download/{BINARY_VERSION}/checksums.txt"
+
+    responses.add(responses.GET, url_archive, body=archive_bytes, status=200)
+    responses.add(responses.GET, url_sums, body=f"{archive_sha}  {asset}\n", status=200)
+
+    monkeypatch.setattr("sys.platform", "linux")
+    import platform
+    monkeypatch.setattr(platform, "machine", lambda: "x86_64")
+
+    with pytest.raises(RuntimeError, match="binary not found after extraction"):
+        ensure_binary()
