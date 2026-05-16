@@ -53,28 +53,7 @@ Every row green: WebDriver not present, Chrome-only properties absent, plugin/mi
 
 **invisible_playwright patches Firefox at the C++ level.** The spoofed values come back out through the normal Gecko paths - there is no JS shim, no override, no `Object.defineProperty`. **From the page's point of view, the browser is just telling the truth.** Anti-bot lie-detectors have nothing to latch onto.
 
-invisible_playwright spoofs **all the layers that matter, together, coherently**:
-
-| Layer | What we do | Why it matters |
-|-------|-----------|-----------------|
-| Navigator / hardware | C++ overrides: UA, oscpu, languages, hardwareConcurrency, deviceMemory, storage quota | Self-description coherent across every API |
-| Screen / window / pointer | C++ patch: screen WxH, outerSize bound, media-query device-size, pointer/hover/touch capabilities | `screen.*`, `window.outer*`, CSS `@media (pointer: fine)` all coherent |
-| CSS system colors | 40 `ui.*` Win32 palette overrides | `getComputedStyle()` on system colors matches real Windows |
-| GPU / WebGL | C++ patch: vendor, renderer, extensions whitelist, integer/float params, shader precisions, readPixels noise | Matches real Windows ANGLE down to enum values |
-| Canvas 2D | C++ patch: per-pixel substitution + geometry skip-mask noise + TextMetrics variance | Defeats canvas hashing and text-metrics fingerprinting |
-| Fonts / DirectWrite | C++ patch: family whitelist + fabricated authoritative list + per-family width scale + DWrite settings | Font enumeration matches real Win10; canvas text hash stable |
-| Audio | C++ patch: sampleRate + output latency + max channels + AnalyserNode/DynamicsCompressor noise | AudioContext fingerprints bucket users very tightly |
-| Speech synthesis | C++ patch: fabricated voices list | `navigator.speechSynthesis.getVoices()` matches the spoofed OS |
-| WebRTC | C++ patch (nICEr): srflx address swap + synthetic srflx fallback + private-LAN host candidates | Real public IP never leaks via STUN |
-| Timezone | C++ patch: per-Realm TZ via BrowsingContext (no IPC pref races) | `Date.getTimezoneOffset()`, `Intl.DateTimeFormat` match the spoofed location |
-| DevTools detection | C++ patch: `Debugger.stealthMode` + Juggler `Runtime.js` + thread actor | FP Pro `developer_tools` = Not detected even with debugger attached |
-| SOCKS5 auth | C++ patch | Stock Playwright+Firefox cannot negotiate it at all |
-| DNS | Routed through SOCKS proxy by default | No DNS leak when using a residential gateway |
-| Mouse motion | Bezier curves inside Juggler `PageHandler.js`, ~10 ms per waypoint | Even `page.click(selector)` moves like a human |
-| GPU on virtual desktop | Pref-driven workaround for FF150 alt-desktop sandbox regression | WebGL renderer populated even in headless / multi-worker mass tests |
-| Fission navigation | C++ patch: `nsDocShell` + `CanonicalBrowsingContext` Juggler navigation fix | `page.goto()` reliable on FF150 across proxy edge cases |
-| about:newtab race | Async wrapper sleep around `new_page()` | No "Navigation interrupted by about:newtab" on FF150 |
-| Proxy reliability | Juggler `PageHandler.equalsExceptRef` split try/catch | No spurious "Invalid url" with proxies like Evomi |
+invisible_playwright spoofs **all the layers that matter, together, coherently** — Navigator, screen, GPU/WebGL, Canvas, fonts, audio, WebRTC, timezone, DevTools detection, SOCKS5 auth, and the rest. See [feder-cr/firefox-stealth](https://github.com/feder-cr/firefox-stealth) for the full per-layer breakdown of which C++ files are patched and why.
 
 Everything is driven by preferences - no hardcoded values in the binary. You change one pref, you change the spoofed value.
 
