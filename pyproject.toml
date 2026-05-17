@@ -31,8 +31,14 @@ dependencies = [
 dev = ["pytest>=7", "pytest-mock>=3", "responses>=0.24", "build>=1"]
 
 [tool.pytest.ini_options]
-markers = ["slow: tests that build the wheel — opt-in only"]
-addopts = "-m 'not slow'"
+markers = [
+    "unit: pure-logic tests, no I/O or external deps",
+    "integration: multi-module tests, no browser",
+    "e2e: requires patched Firefox binary and display",
+    "slow: tests that build the wheel — opt-in only",
+    "linux_only: tests that require Linux platform",
+]
+addopts = "-m 'not slow and not e2e'"
 
 [project.scripts]
 invisible-playwright = "invisible_playwright.cli:main"
