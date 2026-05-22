@@ -384,6 +384,21 @@ _WIN_VIRT_DESKTOP_WORKAROUNDS: Dict[str, Any] = {
     # Bugzilla refs: 1798091, 1524591, 1229829. Lowering the GPU sandbox to 0
     # restores hardware compositor + functional WebGL on alt desktops.
     "security.sandbox.gpu.level": 0,
+    # Same root cause as above, content process side. Wrapper repo issue #18
+    # (id.sky.com tab crash). Sandbox content level > 4 puts content processes
+    # on the sandbox's own kAlternateWinstation (see
+    # security/sandbox/win/src/sandboxbroker/sandboxBroker.cpp line 1113-1114:
+    # `if (aSandboxLevel > 4) config->SetDesktop(kAlternateWinstation)`).
+    # Combined with our CreateDesktop alt-desktop, that puts browser process
+    # and content processes on DIFFERENT desktops. Cross-process navigation
+    # (Adobe AppMeasurement → new origin → new content process on a new
+    # desktop) then fails window parenting between parent and child → content
+    # process exits cleanly (exitCode=0, signal=null) and Playwright fires
+    # page.on('crash') ~10s after page load. Lowering content sandbox to 4
+    # keeps content processes on the same desktop as the browser process,
+    # which is what we want here (and is still tight enough — level 4
+    # blocks file/registry write, network calls, hardware access).
+    "security.sandbox.content.level": 4,
 }
 
 
