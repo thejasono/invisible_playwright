@@ -203,24 +203,6 @@ invisible_playwright version        # wrapper and binary versions
 invisible_playwright clear-cache    # remove all cached binaries
 ```
 
-## Known issues
-
-### `headless=True` on Windows can cause tab crashes on sites with heavy cross-process navigation
-
-Reported as [#18](https://github.com/feder-cr/invisible_playwright/issues/18) (`id.sky.com` and similar). On Windows, `headless=True` runs Firefox headed on a hidden alt-desktop created via `CreateDesktop`. Some sites (id.sky.com, anything else loading Adobe AppMeasurement in a way that triggers cross-process navigation) end up firing `page.on('crash')` after about 10 seconds. The cause is a window-parenting interaction between the alt-desktop and the GPU/content processes; the workaround is one of:
-
-```python
-# Option A — keep the visible window (no alt-desktop)
-with InvisiblePlaywright(seed=42, headless=False) as browser:
-    ...
-
-# Option B — run inside Xvfb on Linux (alt-desktop bug is Windows-only)
-```
-
-The visible window case works on every site we've tested. Linux + Xvfb is unaffected.
-
----
-
 ## Related projects
 
 invisible_playwright takes a different angle than the major Firefox-hardening projects but stands on their shoulders:
