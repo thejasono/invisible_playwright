@@ -22,20 +22,6 @@
 - **100% Playwright API compatible** — sync + async, change 2 lines and your existing scripts work
 
 
-## Results
-
-The 5-frame hero loop above is the actual proof — each frame is a real screenshot of the tester reporting its verdict. Detail per detector:
-
-- **Google reCAPTCHA v3** — 0.90 / 1.0. Google classifies the session as "very likely a human". Most anti-detect stacks plateau around 0.3-0.7.
-- **FingerprintJS Pro** — full Smart Signals battery flips every flag to "Not detected" (bot, VPN, tampering, dev tools). Browser correctly identified as Firefox 150 on Windows 10. Confidence 0.9.
-- **CreepJS** — 0 lies. No contradictions between headless hints, spoofed values, and real rendering output. That "0 lies" is what kills most anti-detect browsers: one inconsistency (e.g. Chrome UA + Firefox WebGL) and the trust score collapses.
-- **BrowserLeaks WebRTC** — no public IP leak. WebRTC srflx address is the proxy egress IP; host candidates are private LAN. Stock Firefox exposes an mDNS hostname as a host ICE candidate, which is itself a stable per-session signal detectors fingerprint. invisible_playwright replaces host candidates with synthetic private-LAN IPs that match the spoofed network, removing the mDNS tell.
-- **bot.sannysoft.com** — all checks pass. WebDriver not present, Chrome-only properties absent, plugin/mime/languages arrays coherent, permissions API correct, iframe/source window checks pass.
-
-Original full-resolution screenshots: [recaptcha](docs/screenshots/recaptcha_score.png) · [fingerprintpro](docs/screenshots/fingerprintpro.png) · [creepjs](docs/screenshots/creepjs.png) · [webrtc](docs/screenshots/webrtc.png) · [sannysoft](docs/screenshots/sannysoft.png)
-
----
-
 ## Why it's powerful
 
 **This is the actively maintained Firefox-based anti-detect browser in 2026.** Camoufox pioneered the source-level patched Firefox approach, but the project has been in a roughly year-long maintenance gap and its base Firefox version is now several majors behind. CloakBrowser does the same thing for Chromium and works well, but it still hits the Chromium reCAPTCHA ceiling (~0.3-0.5). `invisible_playwright` ships **Firefox 150** with weekly releases, source-level C++ patches end-to-end, and a measured **0.90 reCAPTCHA v3** score.
