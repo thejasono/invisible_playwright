@@ -12,6 +12,8 @@
 
 **Stealth Firefox that passes every bot detection test. Drop-in Playwright replacement, fingerprint patched at the C++ level — not a JavaScript shim.**
 
+![invisible_playwright — 5/5 detection suites passed](docs/screenshots/hero.gif)
+
 - **0.90 / 1.0 reCAPTCHA v3** — server-verified human score
 - **0 CreepJS lies** — fingerprint internally coherent, no contradictions
 - **FingerprintJS Pro: bot/VPN/tampering/devtools all "not detected"**
@@ -22,35 +24,15 @@
 
 ## Results
 
-### Google reCAPTCHA v3 - **0.90 / 1.0**
+The 5-frame hero loop above is the actual proof — each frame is a real screenshot of the tester reporting its verdict. Detail per detector:
 
-Top-tier score. Google classifies the session as "very likely a human". Most anti-detect stacks plateau around 0.3-0.7.
+- **Google reCAPTCHA v3** — 0.90 / 1.0. Google classifies the session as "very likely a human". Most anti-detect stacks plateau around 0.3-0.7.
+- **FingerprintJS Pro** — full Smart Signals battery flips every flag to "Not detected" (bot, VPN, tampering, dev tools). Browser correctly identified as Firefox 150 on Windows 10. Confidence 0.9.
+- **CreepJS** — 0 lies. No contradictions between headless hints, spoofed values, and real rendering output. That "0 lies" is what kills most anti-detect browsers: one inconsistency (e.g. Chrome UA + Firefox WebGL) and the trust score collapses.
+- **BrowserLeaks WebRTC** — no public IP leak. WebRTC srflx address is the proxy egress IP; host candidates are private LAN. Stock Firefox exposes an mDNS hostname as a host ICE candidate, which is itself a stable per-session signal detectors fingerprint. invisible_playwright replaces host candidates with synthetic private-LAN IPs that match the spoofed network, removing the mDNS tell.
+- **bot.sannysoft.com** — all checks pass. WebDriver not present, Chrome-only properties absent, plugin/mime/languages arrays coherent, permissions API correct, iframe/source window checks pass.
 
-![reCAPTCHA score 0.90](docs/screenshots/recaptcha_score.png)
-
-### Fingerprint Pro - **bot: not detected, VPN: false, tampering: false, dev tools: not detected**
-
-FingerprintJS Pro's full Smart Signals battery flips every flag to "Not detected". Browser correctly identified as Firefox 150 on Windows 10. Confidence score 0.9.
-
-![FingerprintPro not detected](docs/screenshots/fingerprintpro.png)
-
-### CreepJS - **0 lies**, fingerprint is internally coherent
-
-No contradictions between headless hints, spoofed values, and real rendering output. That "0 lies" is what kills most anti-detect browsers: one inconsistency (e.g. Chrome UA + Firefox WebGL) and the trust score collapses.
-
-![CreepJS 0 lies](docs/screenshots/creepjs.png)
-
-### BrowserLeaks WebRTC - **no public IP leak**
-
-WebRTC srflx address is the proxy egress IP; host candidates are private LAN. The real public IP never leaks via STUN, even on pages that configure their own ICE servers. Stock Firefox exposes an mDNS hostname (e.g. `abc-1234.local`) as a host ICE candidate, which is itself a stable per-session signal detectors fingerprint. invisible_playwright replaces host candidates with synthetic private-LAN IPs that match the spoofed network, removing the mDNS tell.
-
-![WebRTC no leaks](docs/screenshots/webrtc.png)
-
-### bot.sannysoft.com - **all checks pass**
-
-Every row green: WebDriver not present, Chrome-only properties absent, plugin/mime/languages arrays coherent, permissions API correct, iframe/source window checks pass.
-
-![Sannysoft all green](docs/screenshots/sannysoft.png)
+Original full-resolution screenshots: [recaptcha](docs/screenshots/recaptcha_score.png) · [fingerprintpro](docs/screenshots/fingerprintpro.png) · [creepjs](docs/screenshots/creepjs.png) · [webrtc](docs/screenshots/webrtc.png) · [sannysoft](docs/screenshots/sannysoft.png)
 
 ---
 
@@ -73,22 +55,23 @@ Everything is driven by preferences - no hardcoded values in the binary. You cha
 
 ## How it compares
 
-The other two open-source projects that take the same source-level patching approach are **Camoufox** (Firefox) and **CloakBrowser** (Chromium). Camoufox is the closest in spirit but has been in a maintenance gap for about a year — its base Firefox is now several major versions behind and new fingerprint inconsistencies have surfaced. CloakBrowser is a fresh Chromium fork; the binary is solid but on the reCAPTCHA v3 score it lands well below human-grade, the same Chromium ceiling that hits every Chromium-based stealth project.
+Two open-source peers take the same source-level patching approach: **Camoufox** (Firefox) and **CloakBrowser** (Chromium). Camoufox pioneered it but is in a roughly year-long maintenance gap — its base Firefox is several majors behind. CloakBrowser is fresh and active, but still hits the Chromium reCAPTCHA ceiling. The commercial anti-detect browsers (**Multilogin**, **GoLogin**, AdsPower, Dolphin, Kameleo) ship patched Chromium with JS-layer spoofing — they're paid SaaS with managed profiles, but on raw detection bypass they sit below both source-level OSS approaches.
 
-| | invisible_playwright | Camoufox | CloakBrowser |
-|---|---|---|---|
-| Engine | Firefox 150 | Firefox (lagging, ~year-old base) | Chromium |
-| Patch depth | C++ source | C++ source | C++ source |
-| Maintenance | Active (weekly releases) | Maintenance gap (~1 year) | Active |
-| `.toString()` clean | ✅ Native Gecko path | ✅ Native Gecko path | ✅ Native Chromium path |
-| Canvas / WebGL / Audio | ✅ C++ level | ⚠️ Patched but drift vs current Firefox | ✅ C++ level |
-| SOCKS5 auth | ✅ Patched | ❌ | ⚠️ Playwright proxy only |
-| Self-hosted | ✅ | ✅ | ✅ |
-| **reCAPTCHA v3 score** | **0.90** | ~0.3-0.5 (regressed since base FF drift) | ~0.3-0.5 (Chromium ceiling) |
-| FP Pro - bot detected | ✅ Not detected | ⚠️ Sometimes detected | ⚠️ Sometimes detected |
-| CreepJS lies | ✅ 0 | ⚠️ Increasing as base FF ages | ✅ 0 |
+| | invisible_playwright | Camoufox | CloakBrowser | Multilogin | GoLogin |
+|---|---|---|---|---|---|
+| Engine | Firefox 150 | Firefox (~1 year old base) | Chromium | Chromium fork | Chromium fork |
+| Patch depth | C++ source | C++ source | C++ source | JS overrides | JS overrides |
+| Maintenance | Active (weekly) | Gap (~1 year) | Active | Active SaaS | Active SaaS |
+| Self-hosted / Open source | ✅ MIT | ✅ MPL | ✅ MIT | ❌ SaaS | ❌ SaaS |
+| `.toString()` clean | ✅ | ✅ | ✅ | ❌ Detectable shims | ❌ Detectable shims |
+| Canvas / WebGL / Audio | ✅ C++ | ⚠️ Drift vs current FF | ✅ C++ | ⚠️ JS override | ⚠️ JS override |
+| SOCKS5 auth | ✅ Patched | ❌ | ⚠️ Playwright proxy | ⚠️ Varies | ⚠️ Varies |
+| **reCAPTCHA v3 score** | **0.90** | ~0.3-0.5 | ~0.3-0.5 | ~0.3-0.6 | ~0.3-0.6 |
+| FP Pro - bot detected | ✅ Not detected | ⚠️ Sometimes | ⚠️ Sometimes | ❌ Detected | ❌ Detected |
+| CreepJS lies | ✅ 0 | ⚠️ Increasing | ✅ 0 | ❌ Multiple | ❌ Multiple |
+| Cost | Free | Free | Free | From $99/mo | From $49/mo |
 
-reCAPTCHA scores reflect our own testing on Windows 10; Camoufox and CloakBrowser results may vary as they evolve.
+reCAPTCHA scores reflect our own testing on Windows 10; results may vary as competitors evolve.
 
 If you need **Firefox + active maintenance + the highest reCAPTCHA v3 score we've measured on any open-source anti-detect browser**, this is the project for that combination.
 
