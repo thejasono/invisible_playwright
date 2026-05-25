@@ -14,13 +14,6 @@
 
 ![invisible_playwright — 5/5 detection suites passed](docs/screenshots/hero.gif)
 
-- **0.90 / 1.0 reCAPTCHA v3** — server-verified human score
-- **0 CreepJS lies** — fingerprint internally coherent, no contradictions
-- **FingerprintJS Pro: bot/VPN/tampering/devtools all "not detected"**
-- **5/5 detection suites passed** (reCAPTCHA v3, FingerprintJS Pro, CreepJS, BrowserLeaks WebRTC, bot.sannysoft.com)
-- **Real Firefox 150 binary** — Gecko, not Chromium; spoofs applied to canvas, WebGL, audio, fonts, screen, WebRTC, navigator, timezone, SOCKS5 auth, DevTools detection
-- **100% Playwright API compatible** — sync + async, change 2 lines and your existing scripts work
-
 
 ## Why it's powerful
 
