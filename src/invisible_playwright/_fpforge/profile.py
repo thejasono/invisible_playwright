@@ -120,6 +120,11 @@ class Profile:
     webgl: WebGLProfile
     fonts: List[str]
     dark_theme: bool
+    # Bayesian browsing-history: list of {name, category, cookie_profile}
+    # dicts sampled from data/browsing_pool.json with per-class CPT. Used
+    # by _recaptcha_seed.py to build a coherent cookie pre-seed when the
+    # caller opts in via Stealthfox(prep_recaptcha=True).
+    browsing_history: List[Dict[str, str]] = field(default_factory=list)
     _raw: Dict[str, Any] = field(default_factory=dict, repr=False, compare=False)
 
     def to_prefs_dict(self) -> Dict[str, Any]:
@@ -255,5 +260,6 @@ def generate_profile(seed: int, pin: Optional[Dict[str, Any]] = None) -> Profile
         webgl=WebGLProfile(msaa_samples=int(raw["msaa_samples"])),
         fonts=fonts,
         dark_theme=bool(raw["dark_theme"]),
+        browsing_history=list(raw.get("browsing_history") or []),
         _raw=raw,
     )

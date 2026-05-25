@@ -113,6 +113,7 @@ class InvisiblePlaywright:
         extra_prefs: Optional[Dict[str, Any]] = None,
         binary_path: Optional[str] = None,
         profile_dir: Optional[Union[str, Path]] = None,
+        prep_recaptcha: bool = False,
     ) -> None:
         """
         Args:
@@ -166,6 +167,10 @@ class InvisiblePlaywright:
         self._extra_prefs = extra_prefs
         self._binary_path = binary_path
         self._profile_dir: Optional[Path] = Path(profile_dir) if profile_dir else None
+        # reCAPTCHA cookie pre-seed — opt-in. Gated server-side: if a
+        # persistent profile_dir is in use, respect its existing cookies
+        # and DON'T enable pre-seed (the profile owns its own state).
+        self._prep_recaptcha = bool(prep_recaptcha) and self._profile_dir is None
         self._profile: Profile = generate_profile(self.seed, pin=self._pin)
         self._pw: Optional[Playwright] = None
         self._browser: Optional[Browser] = None
@@ -240,12 +245,18 @@ class InvisiblePlaywright:
         """
         original = browser.new_context
         defaults = self._default_context_kwargs()
+        prep = self._prep_recaptcha
+        profile = self._profile  # pass the whole Profile (seed + browsing_history)
+        tz = self._timezone  # used by _recaptcha_seed for CONSENT lang+region
 
         def patched(**kw):
             merged = dict(defaults)
             merged.update(kw)  # user-supplied wins
             ctx = original(**merged)
             _patch_sync_new_page_sleep(ctx)
+            if prep:
+                from ._recaptcha_seed import seed_recaptcha_cookies_sync
+                seed_recaptcha_cookies_sync(ctx, profile, timezone=tz)
             return ctx
 
         browser.new_context = patched  # type: ignore[assignment]

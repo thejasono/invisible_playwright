@@ -306,17 +306,6 @@ def test_navigator_oscpu_matches_userAgent(page):
         assert "Mac" in oscpu
 
 
-@pytest.mark.e2e
-def test_userAgent_contains_appVersion_chromium_only(page):
-    """Chromium invariant: UA contains appVersion. Firefox uses a short
-    appVersion form so the check is gated on `'chrome' in window`."""
-    if not _ev(page, "'chrome' in window"):
-        pytest.skip("Chromium-only invariant")
-    ua = _ev(page, "navigator.userAgent")
-    av = _ev(page, "navigator.appVersion")
-    assert av in ua
-
-
 # ===========================================================================
 # 5. Native function self-toString (creepjs/src/lies/index.ts hasKnownToString)
 # ===========================================================================

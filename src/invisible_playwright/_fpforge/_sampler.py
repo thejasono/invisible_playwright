@@ -84,6 +84,12 @@ _FONT_POOL = _load("font_pool.json")
 _FONT_CORE: list = _FONT_POOL["core"]
 _FONT_OPTIONAL: list = _FONT_POOL["optional"]
 _CPT_FONTS_OPT = _load("cpt_fonts_optional_given_class.json")["table"]
+# Browsing-history pool + CPT (per-class probabilities for visited sites).
+# Drives _recaptcha_seed's cookie pre-seed: each persona ends up with a
+# coherent list of ~15-30 visited sites whose categories correlate with
+# gpu_class (workstation → dev-heavy, integrated_old → shop+news-heavy).
+_BROWSING_POOL: list = _load("browsing_pool.json")["entries"]
+_CPT_BROWSING = _load("cpt_browsing_given_class.json")["table"]
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -283,6 +289,33 @@ def derive_font_whitelist(gpu_class: str, rng) -> str:
 
 
 # ═══════════════════════════════════════════════════════════════════════
+#  BROWSING HISTORY (Bayesian: per-site P(visited|gpu_class))
+# ═══════════════════════════════════════════════════════════════════════
+def derive_browsing_history(gpu_class: str, rng) -> list:
+    """Sample which sites this persona has visited recently.
+
+    Each site in the pool has a per-class probability (CPT). We sample
+    independently per-site, producing a list of dicts:
+        [{"name": "github.com", "category": "dev", "cookie_profile": "ga_cf"}, ...]
+
+    Sum of CPT probabilities per class is tuned to land ~15-30 visited sites
+    on average — an established-user signature. Sorted by name for stable
+    output across runs of the same seed.
+    """
+    cpt = _CPT_BROWSING.get(gpu_class)
+    if cpt is None:
+        cpt = _CPT_BROWSING["mid_range"]
+    visited: list = []
+    for entry in _BROWSING_POOL:
+        name = entry["name"]
+        p = cpt.get(name, 0.3)  # default 0.3 for missing CPT row
+        if rng.random() < p:
+            visited.append(dict(entry))  # copy to avoid mutating pool
+    visited.sort(key=lambda e: e["name"])
+    return visited
+
+
+# ═══════════════════════════════════════════════════════════════════════
 #  PUBLIC API: Forge
 # ═══════════════════════════════════════════════════════════════════════
 import random
@@ -350,6 +383,12 @@ class Forge:
                     bundle["gpu_class"], self._rng
                 ).items()
             },
+            # Bayesian browsing history (per-class P(visited|gpu_class)).
+            # Consumed by _recaptcha_seed.py to seed coherent cookie history
+            # when invisible_playwright is launched with prep_recaptcha=True.
+            "browsing_history": derive_browsing_history(
+                bundle["gpu_class"], self._rng
+            ),
         }
 
 
