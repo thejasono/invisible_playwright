@@ -50,10 +50,6 @@ The closest peer in the source-level patching space is **Camoufox** (Firefox, op
 | CreepJS lies | ✅ 0 | ⚠️ Increasing | ✅ 0 | ❌ Multiple | ❌ Multiple |
 | Cost | Free | Free | Free | From $99/mo | From $49/mo |
 
-reCAPTCHA scores reflect our own testing on Windows 10; results may vary as competitors evolve.
-
-If you need **Firefox + active maintenance + the highest reCAPTCHA v3 score we've measured on any open-source anti-detect browser**, this is the project for that combination.
-
 ---
 
 ## Install
