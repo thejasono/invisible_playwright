@@ -10,7 +10,14 @@
 
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-Federico%20Elia-0A66C2?logo=linkedin&logoColor=white)](https://it.linkedin.com/in/federico-elia-5199951b6)
 
-A patched Firefox **100% Playwright-compatible** that passes the hardest browser-fingerprint detectors in the wild.
+**Stealth Firefox that passes every bot detection test. Drop-in Playwright replacement, fingerprint patched at the C++ level — not a JavaScript shim.**
+
+- **0.90 / 1.0 reCAPTCHA v3** — server-verified human score
+- **0 CreepJS lies** — fingerprint internally coherent, no contradictions
+- **FingerprintJS Pro: bot/VPN/tampering/devtools all "not detected"**
+- **5/5 detection suites passed** (reCAPTCHA v3, FingerprintJS Pro, CreepJS, BrowserLeaks WebRTC, bot.sannysoft.com)
+- **Real Firefox 150 binary** — Gecko, not Chromium; spoofs applied to canvas, WebGL, audio, fonts, screen, WebRTC, navigator, timezone, SOCKS5 auth, DevTools detection
+- **100% Playwright API compatible** — sync + async, change 2 lines and your existing scripts work
 
 
 ## Results
@@ -49,7 +56,9 @@ Every row green: WebDriver not present, Chrome-only properties absent, plugin/mi
 
 ## Why it's powerful
 
-**Most anti-detect browsers patch Chromium at the JavaScript level** - they override `navigator`, `WebGLRenderingContext.getParameter`, canvas APIs, and so on via injected scripts. This has two fatal problems:
+**This is the actively maintained Firefox-based anti-detect browser in 2026.** Camoufox pioneered the source-level patched Firefox approach, but the project has been in a roughly year-long maintenance gap and its base Firefox version is now several majors behind. CloakBrowser does the same thing for Chromium and works well, but it still hits the Chromium reCAPTCHA ceiling (~0.3-0.5). `invisible_playwright` ships **Firefox 150** with weekly releases, source-level C++ patches end-to-end, and a measured **0.90 reCAPTCHA v3** score.
+
+**Most other anti-detect browsers patch Chromium at the JavaScript level** - they override `navigator`, `WebGLRenderingContext.getParameter`, canvas APIs, and so on via injected scripts. This has two fatal problems:
 
 1. **JS patches are detectable.** Anti-bots enumerate native function `.toString()`, check descriptor configurability, compare property enumeration order, watch for prototype mutations. Every patch leaves a fingerprint of its own. CreepJS has an entire battery of "lies detectors" built around this.
 2. **Chromium itself is now suspect.** Residential-proxy bot traffic is overwhelmingly Chromium-based, so detectors weight anything Chromium-shaped as risky by default. Chromium-based forks inherit Chrome's open-source layers (BoringSSL, Blink, V8, ANGLE) cleanly, but they still cannot fully match Chrome in practice: Chrome ships closed-source components on top (Widevine, proprietary codecs, Google Update / Safe Browsing endpoints) that flip detectable JS feature flags and network signals, and forks lag Chrome's release cadence by days to weeks, leaving telltale version-specific behaviours that detectors lock onto.
@@ -64,23 +73,24 @@ Everything is driven by preferences - no hardcoded values in the binary. You cha
 
 ## How it compares
 
-Commercial anti-detect browsers (Multilogin Mimic, GoLogin Orbita, AdsPower, Dolphin Anty) ship patched Chromium and apply most spoofing at the JavaScript layer. A few (Kameleo, Multilogin Stealthfox) also offer Firefox-based profiles, but the spoofing pattern is the same: runtime overrides on top of an unmodified rendering engine. That's the ceiling - and it's a low one.
+The other two open-source projects that take the same source-level patching approach are **Camoufox** (Firefox) and **CloakBrowser** (Chromium). Camoufox is the closest in spirit but has been in a maintenance gap for about a year — its base Firefox is now several major versions behind and new fingerprint inconsistencies have surfaced. CloakBrowser is a fresh Chromium fork; the binary is solid but on the reCAPTCHA v3 score it lands well below human-grade, the same Chromium ceiling that hits every Chromium-based stealth project.
 
-| | invisible_playwright | Multilogin / GoLogin | AdsPower / Dolphin | Kameleo |
-|---|---|---|---|---|
-| Engine | Firefox (open source) | Chromium fork | Chromium fork | Chromium |
-| Patch depth | C++ source | JS overrides | JS overrides | JS overrides |
-| `.toString()` clean | ✅ Native Gecko path | ❌ Detectable shims | ❌ Detectable shims | ❌ Detectable shims |
-| Canvas / WebGL | ✅ C++ level | ⚠️ JS override | ⚠️ JS override | ⚠️ JS override |
-| SOCKS5 auth | ✅ Patched | ⚠️ Varies | ⚠️ Varies | ❌ |
-| Self-hosted | ✅ | ❌ SaaS | ❌ SaaS | ❌ Cloud |
-| reCAPTCHA v3 score | **0.90** | ~0.3-0.6 | ~0.3-0.5 | ~0.3-0.5 |
-| FP Pro - bot detected | ✅ Not detected | ❌ Detected | ❌ Detected | ❌ Detected |
-| FP Pro - tampering | ✅ Not detected | ❌ Detected | ❌ Detected | ❌ Detected |
-| FP Pro - VPN flag | ✅ false | ❌ true | ❌ true | ❌ true |
-| CreepJS lies | ✅ 0 | ❌ multiple | ❌ multiple | ❌ multiple |
+| | invisible_playwright | Camoufox | CloakBrowser |
+|---|---|---|---|
+| Engine | Firefox 150 | Firefox (lagging, ~year-old base) | Chromium |
+| Patch depth | C++ source | C++ source | C++ source |
+| Maintenance | Active (weekly releases) | Maintenance gap (~1 year) | Active |
+| `.toString()` clean | ✅ Native Gecko path | ✅ Native Gecko path | ✅ Native Chromium path |
+| Canvas / WebGL / Audio | ✅ C++ level | ⚠️ Patched but drift vs current Firefox | ✅ C++ level |
+| SOCKS5 auth | ✅ Patched | ❌ | ⚠️ Playwright proxy only |
+| Self-hosted | ✅ | ✅ | ✅ |
+| **reCAPTCHA v3 score** | **0.90** | ~0.3-0.5 (regressed since base FF drift) | ~0.3-0.5 (Chromium ceiling) |
+| FP Pro - bot detected | ✅ Not detected | ⚠️ Sometimes detected | ⚠️ Sometimes detected |
+| CreepJS lies | ✅ 0 | ⚠️ Increasing as base FF ages | ✅ 0 |
 
-Competitor scores reflect our own testing on Windows 10 against the same five detection suites used above; results may vary with their evolving builds.
+reCAPTCHA scores reflect our own testing on Windows 10; Camoufox and CloakBrowser results may vary as they evolve.
+
+If you need **Firefox + active maintenance + the highest reCAPTCHA v3 score we've measured on any open-source anti-detect browser**, this is the project for that combination.
 
 ---
 
