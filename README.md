@@ -41,7 +41,7 @@ The closest peer in the source-level patching space is **Camoufox** (Firefox, op
 | Engine | Firefox 150 | Firefox (~1 year old base) | Chromium | Chromium fork | Chromium fork |
 | Patch depth | C++ source | C++ source | C++ source (binary only) | JS overrides | JS overrides |
 | Maintenance | Active (weekly) | Gap (~1 year) | Active | Active SaaS | Active SaaS |
-| Open source | ✅ MIT | ✅ MPL | ❌ Closed source (binary only) | ❌ Closed source | ❌ Closed source |
+| Open source | ✅ MIT | ✅ MPL | ❌ Closed source | ❌ Closed source | ❌ Closed source |
 | `.toString()` clean | ✅ | ✅ | ✅ | ❌ Detectable shims | ❌ Detectable shims |
 | Canvas / WebGL / Audio | ✅ C++ | ⚠️ Drift vs current FF | ✅ C++ | ⚠️ JS override | ⚠️ JS override |
 | SOCKS5 auth | ✅ Patched | ❌ | ⚠️ Playwright proxy | ⚠️ Varies | ⚠️ Varies |
