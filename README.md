@@ -33,21 +33,21 @@ Everything is driven by preferences - no hardcoded values in the binary. You cha
 
 ## How it compares
 
-The closest peer in the source-level patching space is **Camoufox** (Firefox, open source): same approach as ours, but in a roughly year-long maintenance gap with its base Firefox several majors behind. **CloakBrowser** ships a similar pitch for Chromium, but its binary is **closed source** (the source-level patches are not published, you only get the compiled output), and it still hits the Chromium reCAPTCHA ceiling. The commercial anti-detect browsers (**Multilogin**, **GoLogin**, AdsPower, Dolphin, Kameleo) are paid SaaS that overlay JS-layer spoofing on a patched Chromium. Managed profiles are nice but raw detection bypass sits below both Camoufox and us.
+**CloakBrowser** ships a similar pitch for Chromium, but its binary is **closed source** (the source-level patches are not published, you only get the compiled output), and it still hits the Chromium reCAPTCHA ceiling. The commercial anti-detect browsers (**Multilogin**, **GoLogin**, AdsPower, Dolphin, Kameleo) are paid SaaS that overlay JS-layer spoofing on a patched Chromium. Managed profiles are nice but raw detection bypass sits below both Camoufox and us.
 
-| | invisible_playwright | Camoufox | CloakBrowser | Multilogin | GoLogin |
-|---|---|---|---|---|---|
-| Engine | Firefox 150 | Firefox (~1 year old base) | Chromium | Chromium fork | Chromium fork |
-| Patch depth | C++ source | C++ source | C++ source (binary only) | JS overrides | JS overrides |
-| Maintenance | Active (weekly) | Gap (~1 year) | Active | Active SaaS | Active SaaS |
-| Open source | ✅ MIT | ✅ MPL | ❌ Closed source | ❌ Closed source | ❌ Closed source |
-| `.toString()` clean | ✅ | ✅ | ✅ | ❌ Detectable shims | ❌ Detectable shims |
-| Canvas / WebGL / Audio | ✅ C++ | ⚠️ Drift vs current FF | ✅ C++ | ⚠️ JS override | ⚠️ JS override |
-| SOCKS5 auth | ✅ Patched | ❌ | ⚠️ Playwright proxy | ⚠️ Varies | ⚠️ Varies |
-| **reCAPTCHA v3 score** | **0.90** | ~0.3-0.5 | ~0.3-0.5 | ~0.3-0.6 | ~0.3-0.6 |
-| FP Pro - bot detected | ✅ Not detected | ❌ Detected | ❌ Detected | ❌ Detected | ❌ Detected |
-| CreepJS lies | ✅ 0 | ❌ Multiple | ✅ 0 | ❌ Multiple | ❌ Multiple |
-| Cost | Free | Free | Free | From $99/mo | From $49/mo |
+| | invisible_playwright | Camoufox | CloakBrowser | Multilogin |
+|---|---|---|---|---|
+| Engine | Firefox 150 | Firefox (~1 year old base) | Chromium | Chromium fork | 
+| Patch depth | C++ source | C++ source | C++ source (binary only) | JS overrides | 
+| Maintenance | Active (weekly) | Gap (~1 year) | Active | Active SaaS | 
+| Open source | ✅ MIT | ✅ MPL | ❌ Closed source | ❌ Closed source | 
+| `.toString()` clean | ✅ | ✅ | ✅ | ❌ Detectable shims | 
+| Canvas / WebGL / Audio | ✅ C++ | ⚠️ Drift vs current FF | ✅ C++ | ⚠️ JS override |
+| SOCKS5 auth | ✅ Patched | ❌ | ⚠️ Playwright proxy | ⚠️ Varies | 
+| **reCAPTCHA v3 score** | **0.90** | ~0.3-0.5 | ~0.3-0.5 | ~0.3-0.6 | 
+| FP Pro - bot detected | ✅ Not detected | ❌ Detected | ❌ Detected | ❌ Detected | 
+| CreepJS lies | ✅ 0 | ❌ Multiple | ✅ 0 | ❌ Multiple | 
+| Cost | Free | Free | Free | From $99/mo | 
 
 ---
 
