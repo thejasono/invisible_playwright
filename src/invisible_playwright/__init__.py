@@ -17,7 +17,8 @@ Quickstart:
 """
 from .config import get_default_args, get_default_stealth_prefs
 from .constants import BINARY_VERSION, FIREFOX_UPSTREAM_VERSION
-from .download import ensure_binary
+from ._geo import GeoTimezoneError, resolve_session_timezone
+from .download import ensure_binary, ensure_geoip_mmdb
 from .launcher import InvisiblePlaywright
 
 from importlib.metadata import PackageNotFoundError, version as _pkg_version
@@ -32,8 +33,11 @@ except PackageNotFoundError:
 __all__ = [
     "InvisiblePlaywright",
     "ensure_binary",
+    "ensure_geoip_mmdb",
     "get_default_stealth_prefs",
     "get_default_args",
+    "resolve_session_timezone",
+    "GeoTimezoneError",
     "BINARY_VERSION",
     "FIREFOX_UPSTREAM_VERSION",
     "__version__",

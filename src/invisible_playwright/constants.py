@@ -46,3 +46,19 @@ BINARY_ENTRY_REL = {
 RELEASE_URL_TEMPLATE = (
     "https://github.com/feder-cr/invisible_playwright/releases/download/{tag}/{asset}"
 )
+
+# ─────────────────────────────────────────────────────────────────────────
+#  GeoIP database (timezone="auto" → resolve IANA zone from proxy egress IP)
+# ─────────────────────────────────────────────────────────────────────────
+# daijro/geoip-all-in-one merges IP2Location LITE + GeoLite2 + DB-IP into a
+# single mmdb (country ISO + coordinates + IANA timezone via tzfpy), rebuilt
+# weekly. GPL-3.0, so we DOWNLOAD it at runtime into the user cache (like the
+# Firefox binary) rather than bundling it into this MIT package. Pinned to a
+# known-good weekly tag; bump to refresh. The `-all` variant covers IPv4+IPv6.
+GEOIP_REPO: str = "daijro/geoip-all-in-one"
+GEOIP_MMDB_VERSION: str = "2026.06.03"
+GEOIP_ASSET: str = "geoip-aio-all.mmdb.zip"
+GEOIP_MMDB_NAME: str = "geoip-aio-all.mmdb"
+GEOIP_RELEASE_URL_TEMPLATE: str = (
+    "https://github.com/daijro/geoip-all-in-one/releases/download/{tag}/{asset}"
+)

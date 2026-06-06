@@ -18,6 +18,10 @@ from .constants import (
     ARCHIVE_NAME,
     BINARY_ENTRY_REL,
     BINARY_VERSION,
+    GEOIP_ASSET,
+    GEOIP_MMDB_NAME,
+    GEOIP_MMDB_VERSION,
+    GEOIP_RELEASE_URL_TEMPLATE,
     RELEASE_URL_TEMPLATE,
 )
 
@@ -151,3 +155,49 @@ def ensure_binary(version: str = BINARY_VERSION) -> Path:
     if not entry.exists():
         raise RuntimeError(f"binary not found after extraction: {entry}")
     return entry
+
+
+# ─────────────────────────────────────────────────────────────────────────
+#  GeoIP mmdb (used by timezone="auto" to map proxy egress IP → IANA zone)
+# ─────────────────────────────────────────────────────────────────────────
+def geoip_mmdb_path(version: str = GEOIP_MMDB_VERSION) -> Path:
+    """Cache location for the extracted geoip mmdb."""
+    return cache_root() / "geoip" / version / GEOIP_MMDB_NAME
+
+
+def ensure_geoip_mmdb(version: str = GEOIP_MMDB_VERSION) -> Path:
+    """Return a path to the geoip mmdb, downloading + caching it if needed.
+
+    Set ``STEALTHFOX_GEOIP_MMDB`` to point at a user-supplied mmdb (or a test
+    fixture) to skip the download entirely. Otherwise the pinned weekly build
+    of ``daijro/geoip-all-in-one`` is fetched from GitHub Releases (public, no
+    token) into the user cache and unzipped once.
+    """
+    override = os.environ.get("STEALTHFOX_GEOIP_MMDB")
+    if override:
+        p = Path(override)
+        if not p.exists():
+            raise RuntimeError(
+                f"STEALTHFOX_GEOIP_MMDB points to a missing file: {p}"
+            )
+        return p
+
+    dst = geoip_mmdb_path(version)
+    if dst.exists():
+        return dst
+
+    url = GEOIP_RELEASE_URL_TEMPLATE.format(tag=version, asset=GEOIP_ASSET)
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory() as td:
+        archive = Path(td) / GEOIP_ASSET
+        _download_file(url, archive)
+        _extract(archive, dst.parent)
+
+    if dst.exists():
+        return dst
+    # The asset name inside the zip may differ from GEOIP_MMDB_NAME — fall
+    # back to the first .mmdb the archive produced.
+    candidates = sorted(dst.parent.glob("*.mmdb"))
+    if candidates:
+        return candidates[0]
+    raise RuntimeError(f"geoip mmdb not found after extraction in {dst.parent}")

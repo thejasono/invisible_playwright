@@ -9,6 +9,7 @@ from typing import Any, Dict, Optional, Union
 from playwright.async_api import Browser, BrowserContext, Playwright, async_playwright
 
 from ._fpforge import Profile, generate_profile
+from ._geo import resolve_session_timezone
 from ._headless import make_virtual_display
 from ._proxy import configure_proxy as _configure_proxy_shared
 from .download import ensure_binary
@@ -75,6 +76,13 @@ class InvisiblePlaywright:
 
     async def __aenter__(self) -> Union[Browser, BrowserContext]:
         import sys as _sys
+        # Resolve timezone="auto" (and the proxy-set-but-unset default) to a
+        # concrete IANA zone before anything reads self._timezone. Run the
+        # blocking geo lookup off the event loop. Fail-early if a proxy is set
+        # but the egress zone can't be resolved.
+        self._timezone = await asyncio.to_thread(
+            resolve_session_timezone, self._timezone, self._proxy
+        )
         executable = self._binary_path or ensure_binary()
         prefs = translate_profile_to_prefs(
             self._profile,

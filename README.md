@@ -141,6 +141,33 @@ with InvisiblePlaywright(proxy=proxy) as browser:
 
 Schemes supported: `socks5`, `socks4`, `http`, `https`. Auth works on all of them (SOCKS5 via patched `nsProtocolProxyService.cpp`, HTTP/HTTPS via Playwright). DNS is routed through the proxy by default, no local leak.
 
+### Timezone
+
+The browser timezone follows `timezone=`:
+
+```python
+# default: with a proxy, the timezone is auto-derived from the proxy egress IP
+with InvisiblePlaywright(proxy=proxy) as browser:
+    ...
+
+# explicit IANA zone always wins
+with InvisiblePlaywright(proxy=proxy, timezone="America/New_York") as browser:
+    ...
+
+# opt out and keep the host timezone even behind a proxy
+with InvisiblePlaywright(proxy=proxy, timezone="host") as browser:
+    ...
+```
+
+| `timezone=` | with proxy | without proxy |
+|---|---|---|
+| `""` (default) | auto-derived from egress IP | host timezone |
+| `"auto"` | auto-derived from egress IP | host timezone |
+| `"Area/City"` | that zone | that zone |
+| `"host"` / `"local"` | host timezone | host timezone |
+
+A proxy in a different country paired with the host timezone is the classic `timezone_mismatch` signal, so a proxy with no explicit timezone now resolves automatically. The egress IP is looked up through the proxy and mapped to its IANA zone with an offline database ([`daijro/geoip-all-in-one`](https://github.com/daijro/geoip-all-in-one)), downloaded and cached on first use. If a proxy is set but the zone can't be resolved, the launch raises rather than silently falling back to the host zone — pass an explicit `timezone=` or `timezone="host"` to override. Point `STEALTHFOX_GEOIP_MMDB` at your own `.mmdb` to skip the download.
+
 ### Pinning specific fingerprint fields
 
 By default everything comes from `seed`. To force specific values while the rest stays seed-derived:

@@ -8,6 +8,7 @@ from typing import Any, Dict, Optional, Union
 from playwright.sync_api import Browser, BrowserContext, Playwright, sync_playwright
 
 from ._fpforge import Profile, generate_profile
+from ._geo import resolve_session_timezone
 from ._headless import make_virtual_display
 from ._proxy import configure_proxy as _configure_proxy_shared
 from .download import ensure_binary
@@ -178,6 +179,10 @@ class InvisiblePlaywright:
         self._virtual_display: Any = None
 
     def __enter__(self) -> Union[Browser, BrowserContext]:
+        # Resolve timezone="auto" (and the proxy-set-but-unset default) to a
+        # concrete IANA zone before anything reads self._timezone. Fail-early
+        # if a proxy is set but the egress zone can't be resolved.
+        self._timezone = resolve_session_timezone(self._timezone, self._proxy)
         executable = self._binary_path or ensure_binary()
         prefs = self._build_prefs()
         playwright_proxy = _configure_proxy_shared(self._proxy, prefs)

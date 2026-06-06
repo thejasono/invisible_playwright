@@ -22,7 +22,9 @@ classifiers = [
 dependencies = [
     "playwright>=1.40",
     "platformdirs>=4",
-    "requests>=2.31",
+    "requests[socks]>=2.31",
+    "maxminddb>=2.2",
+    "tzdata>=2024.1",
     "tqdm>=4.66",
     "pywin32>=306; sys_platform == 'win32'",
 ]
