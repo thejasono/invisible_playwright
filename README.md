@@ -155,9 +155,6 @@ with InvisiblePlaywright(proxy=proxy, timezone="America/New_York") as browser:
     ...
 ```
 
-
-The timezone always tracks the actual egress, so it can't disagree with the IP — a proxy in a different country paired with the host timezone is the classic `timezone_mismatch` signal. The egress IP is mapped to its IANA zone with an offline database ([`daijro/geoip-all-in-one`](https://github.com/daijro/geoip-all-in-one)), which auto-updates against its weekly rebuild and is cached locally (point `STEALTHFOX_GEOIP_MMDB` at your own `.mmdb` to skip the download). On failure: with a proxy the launch raises rather than silently using the host zone (pass an explicit `timezone=` to override); without a proxy it falls back to the host timezone so a transient lookup failure can't break the launch.
-
 ### Pinning specific fingerprint fields
 
 By default everything comes from `seed`. To force specific values while the rest stays seed-derived:
