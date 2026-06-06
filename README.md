@@ -45,8 +45,8 @@ The closest peer in the source-level patching space is **Camoufox** (Firefox, op
 | Canvas / WebGL / Audio | ✅ C++ | ⚠️ Drift vs current FF | ✅ C++ | ⚠️ JS override | ⚠️ JS override |
 | SOCKS5 auth | ✅ Patched | ❌ | ⚠️ Playwright proxy | ⚠️ Varies | ⚠️ Varies |
 | **reCAPTCHA v3 score** | **0.90** | ~0.3-0.5 | ~0.3-0.5 | ~0.3-0.6 | ~0.3-0.6 |
-| FP Pro - bot detected | ✅ Not detected | ⚠️ Sometimes | ⚠️ Sometimes | ❌ Detected | ❌ Detected |
-| CreepJS lies | ✅ 0 | ⚠️ Increasing | ✅ 0 | ❌ Multiple | ❌ Multiple |
+| FP Pro - bot detected | ✅ Not detected | ❌ Detected | ❌ Detected | ❌ Detected | ❌ Detected |
+| CreepJS lies | ✅ 0 | ❌ Multiple | ✅ 0 | ❌ Multiple | ❌ Multiple |
 | Cost | Free | Free | Free | From $99/mo | From $49/mo |
 
 ---
