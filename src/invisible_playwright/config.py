@@ -66,7 +66,10 @@ def get_default_stealth_prefs(
         locale: BCP-47 tag (e.g. ``"en-US"``). Drives ``Accept-Language``
             and ``navigator.language``.
         timezone: IANA timezone (e.g. ``"America/New_York"``). Empty means
-            use the host TZ.
+            use the host TZ. This pure pref builder does NOT resolve
+            ``"auto"`` (that needs the proxy + a network lookup at launch
+            time) — pass a concrete zone here, or use ``InvisiblePlaywright``
+            / ``resolve_session_timezone(timezone, proxy)`` for ``"auto"``.
         extra_prefs: Optional dict overlaid LAST onto the generated prefs.
         humanize: When True (default), every mouse move is expanded into
             a Bezier trajectory by the patched Juggler. A float caps the

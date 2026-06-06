@@ -136,8 +136,13 @@ class InvisiblePlaywright:
                 a float caps the motion in seconds.
             locale: BCP-47 tag (e.g. ``"en-US"``). Drives the
                 ``Accept-Language`` header and ``navigator.language``.
-            timezone: IANA timezone (e.g. ``"America/New_York"``). Empty
-                means use the host TZ.
+            timezone: IANA zone (e.g. ``"America/New_York"``) — used as-is
+                when set. ``""`` (default) or ``"auto"`` resolves the zone
+                from the proxy egress IP when a proxy is set (one lookup
+                through the proxy + an offline mmdb), otherwise the host TZ.
+                ``"host"`` / ``"local"`` forces the host TZ even behind a
+                proxy. With a proxy, an unresolvable zone raises rather than
+                silently falling back to the host TZ (``timezone_mismatch``).
             extra_prefs: Optional dict of Firefox prefs overlayed on top
                 of the generated profile — useful for niche tweaks
                 without monkey-patching the package.
