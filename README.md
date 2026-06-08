@@ -38,8 +38,8 @@ Everything is driven by preferences - no hardcoded values in the binary. You cha
 | | invisible_playwright | Camoufox | CloakBrowser | Multilogin |
 |---|---|---|---|---|
 | Engine | Firefox 150 | Firefox (~1 year old base) | Chromium | Chromium fork | 
-| Patch depth | C++ source | C++ source | C++ source (binary only) | JS overrides | 
-| Maintenance | Active (weekly) | Gap (~1 year) | Active | Active SaaS | 
+| Patch depth | C++ source | C++ source | C++ source  | JS overrides | 
+| Maintenance | Active | Gap (~1 year) | Active | Active SaaS | 
 | Open source | ✅ MIT | ✅ MPL | ❌ Closed source | ❌ Closed source | 
 | `.toString()` clean | ✅ | ✅ | ✅ | ❌ Detectable shims | 
 | Canvas / WebGL / Audio | ✅ C++ | ⚠️ Drift vs current FF | ✅ C++ | ⚠️ JS override |
