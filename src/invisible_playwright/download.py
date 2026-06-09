@@ -21,6 +21,7 @@ from .constants import (
     ARCHIVE_NAME,
     BINARY_ENTRY_REL,
     BINARY_VERSION,
+    BROKEN_VERSIONS,
     GEOIP_ASSET,
     GEOIP_MMDB_NAME,
     GEOIP_MMDB_VERSION,
@@ -148,6 +149,12 @@ def _post_extract_darwin(app_root: Path, entry: Path) -> None:
 
 def ensure_binary(version: str = BINARY_VERSION) -> Path:
     """Return a path to a runnable Firefox executable. Download if needed."""
+    if version in BROKEN_VERSIONS:
+        raise RuntimeError(
+            f"{version} is a known-broken release (the juggler automation layer is "
+            f"missing, so Playwright cannot drive it). Upgrade invisible_playwright "
+            f"(current BINARY_VERSION={BINARY_VERSION}) or pass a newer version."
+        )
     plat = sys.platform
     mach = platform.machine()
     asset = ARCHIVE_NAME(plat, mach)

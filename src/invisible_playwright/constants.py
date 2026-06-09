@@ -7,7 +7,14 @@ bugfixes don't force a multi-hour Firefox rebuild.
 from __future__ import annotations
 
 # Bump this when a new patched Firefox build is released on GitHub.
-BINARY_VERSION: str = "firefox-8"
+BINARY_VERSION: str = "firefox-9"
+
+# Releases known to be broken — ensure_binary() refuses them with a clear error
+# instead of handing the user an unusable binary. firefox-8 was packaged without
+# the juggler automation layer, so Playwright cannot drive it (TargetClosedError);
+# fixed in firefox-9 (package-manifest.in now ships chrome/juggler). A cached
+# firefox-8 from before the bump would otherwise keep being used silently.
+BROKEN_VERSIONS: frozenset[str] = frozenset({"firefox-8"})
 
 # Underlying Firefox version (for display only; does not drive downloads).
 FIREFOX_UPSTREAM_VERSION: str = "150.0.1"

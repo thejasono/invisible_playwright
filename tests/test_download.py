@@ -832,3 +832,11 @@ def test_parse_owner_repo_handles_repos_with_dashes_and_underscores():
     )
     assert owner == "my-org"
     assert repo == "my_cool.repo"
+
+
+@pytest.mark.unit
+def test_ensure_binary_refuses_known_broken_version():
+    """A known-broken release (firefox-8, no juggler) must be refused with a
+    clear error BEFORE any download — never silently handed to the user."""
+    with pytest.raises(RuntimeError, match="known-broken"):
+        ensure_binary("firefox-8")

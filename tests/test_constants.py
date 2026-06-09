@@ -5,9 +5,24 @@ from invisible_playwright.constants import (
     BINARY_BASENAME,
     BINARY_ENTRY_REL,
     BINARY_VERSION,
+    BROKEN_VERSIONS,
     FIREFOX_UPSTREAM_VERSION,
     RELEASE_URL_TEMPLATE,
 )
+
+
+@pytest.mark.unit
+def test_broken_versions_excludes_current():
+    """The current BINARY_VERSION must NEVER be in BROKEN_VERSIONS — otherwise
+    every default ensure_binary() call would raise and the wrapper is unusable."""
+    assert BINARY_VERSION not in BROKEN_VERSIONS
+
+
+@pytest.mark.unit
+def test_firefox_8_is_marked_broken():
+    """firefox-8 shipped without the juggler layer (undrivable by Playwright);
+    it must stay flagged so a stale cache can't silently hand it to a user."""
+    assert "firefox-8" in BROKEN_VERSIONS
 
 
 @pytest.mark.unit
