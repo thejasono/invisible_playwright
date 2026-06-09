@@ -1,5 +1,5 @@
 # ─────────────────────────────────────────────────────────────────────────────
-# e2e.yml — run the FULL browser-driving e2e suite (the 138 @pytest.mark.e2e)
+# e2e.yml — run the FULL browser-driving e2e suite (the 127 @pytest.mark.e2e)
 # on GitHub, on every push/PR to main.
 #
 # Why this can run on CI when the drive-gate had to stay light: the drive-gate

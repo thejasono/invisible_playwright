@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Run the FULL e2e suite (every test that opens the browser) against a binary.
 
-The 138 ``@pytest.mark.e2e`` tests are excluded from the default `pytest` run
+The 127 ``@pytest.mark.e2e`` tests are excluded from the default `pytest` run
 (`addopts = -m 'not slow and not e2e'`) because they need a real Firefox binary
 and a display, and they skip themselves when no binary is available. That makes
 them easy to forget — and "we can't afford for something to not work". This is
