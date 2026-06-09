@@ -23,7 +23,11 @@ on:
         required: true
 
 permissions:
-  contents: read
+  # write (not read) is required: GitHub only exposes DRAFT releases to tokens
+  # with push access. With contents:read, `gh release download` on a draft tag
+  # 404s ("release not found"). This workflow only READS assets — the elevated
+  # scope is solely to make draft releases visible to GITHUB_TOKEN.
+  contents: write
 
 jobs:
   drive:
