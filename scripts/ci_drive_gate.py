@@ -1,15 +1,26 @@
 #!/usr/bin/env python3
-"""CI drive gate — the firefox-8 catcher.
+"""CI drive gate — the firefox-N catcher.
 
 A raw `firefox --screenshot` proves nothing about automation: a juggler-less
 binary renders a screenshot just fine and ships broken (firefox-8 did exactly
 that). This DRIVES the binary the way users will — Playwright launches it over
-the juggler pipe, loads a real page, and round-trips JS. A binary with a
-missing/broken juggler throws TargetClosedError here and the gate fails.
+the juggler pipe and exercises the input/DOM paths real callers depend on.
 
-Headless, NO screenshot → GPU-free, so it can't false-fail on GPU-less hosted
-runners. Zero proxy / zero secrets → safe in public CI. (The proxy realness
-gate — fppro/webrtc — stays local, it needs secrets.)
+It deliberately covers the failure modes that HISTORICALLY shipped green:
+  - juggler missing entirely      → TargetClosedError on launch (firefox-8)
+  - mouse/keyboard input broken   → click/move/type assertions (firefox-2 #9:
+                                     jugglerSendMouseEvent / synthesizeMouseEvent)
+  - cross-origin iframe broken    → content_frame() reachable (issue #20)
+  - canvas non-deterministic      → identical draw → identical dataURL (stealth
+                                     seed must be per-session, not per-readback)
+  - headless navigator tells      → navigator.webdriver falsy, languages
+                                     non-empty, plugins is a real PluginArray
+
+All of this is headless, NO screenshot → GPU-free (can't false-fail on the
+GPU-less hosted runners), and fully offline — data: URLs only, NO network, NO
+proxy, NO secrets → safe in public CI. WebGL determinism is intentionally NOT
+checked here (it needs SWGL and can false-fail headless); it lives in the local
+proxy realness gate, alongside the fingerprint/WebRTC-vs-vanilla checks.
 
 Usage:  python ci_drive_gate.py /path/to/firefox[.exe | .app/Contents/MacOS/firefox]
 Exit 0 + "DRIVE GATE OK ..." on success; non-zero with a reason on failure.
@@ -20,25 +31,82 @@ import sys
 
 from playwright.sync_api import sync_playwright
 
+# Single offline page that wires up every probe: a clickable button, a text
+# input, a same-document iframe, and a mousemove counter. data: URLs execute
+# inline scripts and are same-origin, so this needs no server.
+PAGE = (
+    "data:text/html,"
+    "<title>dt</title>"
+    "<h1 id=x>hello-drive</h1>"
+    "<button id=b onclick=\"window.__clicked=1\">go</button>"
+    "<input id=inp>"
+    "<iframe id=f src=\"data:text/html,<b id=ok>ok</b>\"></iframe>"
+    "<script>window.__moves=0;"
+    "addEventListener('mousemove',function(){window.__moves++})</script>"
+)
+
+# Identical 2D draw, evaluated twice in one session. The stealth canvas spoof is
+# seeded per-session (see fingerprint-consistency rule), so two identical draws
+# MUST produce byte-identical output. Per-readback noise → instant bot flag.
+CANVAS_DRAW = (
+    "() => {const c=document.createElement('canvas');c.width=c.height=16;"
+    "const g=c.getContext('2d');g.fillStyle='#08f';g.fillRect(0,0,16,16);"
+    "g.fillStyle='#f40';g.fillText('s',2,12);return c.toDataURL();}"
+)
+
 
 def main(exe: str) -> int:
     with sync_playwright() as p:
         browser = p.firefox.launch(executable_path=exe, headless=True)
         page = browser.new_page()
-        # data: URL → real HTML parse + DOM + JS, fully offline (no network/proxy).
-        page.goto("data:text/html,<title>dt</title><h1 id=x>hello-drive</h1>")
+        page.goto(PAGE)
+
         ua = page.evaluate("navigator.userAgent")
         webdriver = page.evaluate("navigator.webdriver")
         text = page.evaluate("() => document.getElementById('x').textContent")
+
+        # firefox-2 / issue-#9 catcher: real mouse + keyboard over juggler.
+        page.mouse.move(20, 20)
+        page.mouse.move(120, 90)          # exercises synthesizeMouseEvent path
+        page.click("#b")                  # mousedown/up/click → onclick fires
+        page.click("#inp")
+        page.keyboard.type("ok")
+        clicked = page.evaluate("window.__clicked")
+        moves = page.evaluate("window.__moves")
+        typed = page.evaluate("() => document.getElementById('inp').value")
+
+        # issue-#20 catcher: the iframe must be reachable and runnable.
+        frame_el = page.query_selector("#f")
+        frame = frame_el.content_frame() if frame_el else None
+        iframe_ok = bool(frame) and frame.evaluate(
+            "() => document.getElementById('ok') && document.getElementById('ok').textContent"
+        ) == "ok"
+
+        # stealth-determinism catcher: identical draw → identical dataURL.
+        canvas_a = page.evaluate(CANVAS_DRAW)
+        canvas_b = page.evaluate(CANVAS_DRAW)
+
+        # BotD navigator-surface tells (proxy-free subset).
+        langs = page.evaluate("navigator.languages.length")
+        plugins = page.evaluate("navigator.plugins instanceof PluginArray")
+
         browser.close()
 
     assert "Firefox" in ua, f"unexpected UA (binary not driving correctly): {ua!r}"
     assert text == "hello-drive", f"DOM/JS roundtrip failed: {text!r}"
-    # Free stealth smoke: the patched build hides navigator.webdriver even when
-    # driven by bare Playwright. A True here is a stealth regression, not a crash.
     assert not webdriver, f"navigator.webdriver leaked True (stealth regression): {webdriver!r}"
+    assert clicked == 1, "page.click() did not fire onclick — mouse-event synthesis broken (firefox-2 class)"
+    assert moves >= 1, "page.mouse.move() produced no mousemove — jugglerSendMouseEvent regression"
+    assert typed == "ok", f"page.keyboard.type() failed: {typed!r}"
+    assert iframe_ok, "iframe content_frame() unreachable — fission.webContentIsolationStrategy regression (issue #20)"
+    assert canvas_a == canvas_b, "canvas non-deterministic across identical draws (stealth seed broken → bot tell)"
+    assert langs and langs > 0, "navigator.languages empty (headless tell)"
+    assert plugins, "navigator.plugins is not a PluginArray (headless tell)"
 
-    print(f"DRIVE GATE OK | UA={ua} | webdriver={webdriver} | dom-roundtrip=ok")
+    print(
+        f"DRIVE GATE OK | UA={ua} | webdriver={webdriver} | "
+        f"click+mousemove+keyboard+iframe+canvas-determinism+navsurface=ok"
+    )
     return 0
 
 

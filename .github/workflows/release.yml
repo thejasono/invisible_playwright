@@ -181,19 +181,19 @@ jobs:
         if: matrix.family == 'win'
         run: |
           set -e
-          ./mach package || echo "mach package rc=$? (continuing to locate the app tree)"
-          # Prefer the clean packaged tree; fall back to dist/bin if cross didn't produce dist/firefox
-          if [ -f obj-rel/dist/firefox/firefox.exe ]; then WIN_APP=obj-rel/dist/firefox
-          elif [ -f obj-rel/dist/bin/firefox.exe ]; then WIN_APP=obj-rel/dist/bin
-          else echo "ERROR: firefox.exe not found in dist/firefox nor dist/bin"; exit 1; fi
+          # Do NOT swallow a mach failure: `./mach package || echo` lets set -e pass
+          # and would fall through to a stale tree. A release MUST come from the clean
+          # dist/firefox; dist/bin is the dev tree (cruft + loose juggler that masked
+          # the firefox-7/8 packaging bugs), never acceptable for a release.
+          ./mach package
+          [ -f obj-rel/dist/firefox/firefox.exe ] \
+            || { echo "ERROR: mach package did not produce a clean dist/firefox tree"; exit 1; }
+          WIN_APP=obj-rel/dist/firefox
           echo "packaging from: $WIN_APP"
-          # JUGGLER GATE: omni.ja must carry juggler (dist/firefox) or loose chrome/ (dist/bin fallback)
-          if [ -f "$WIN_APP/omni.ja" ]; then
-            python3 -c "import zipfile,sys; sys.exit(0 if any('juggler' in n.lower() for n in zipfile.ZipFile('$WIN_APP/omni.ja').namelist()) else 1)" \
-              || { echo "ERROR: juggler missing from $WIN_APP/omni.ja — Playwright can't drive it"; exit 1; }
-          elif [ ! -d "$WIN_APP/chrome/juggler" ]; then
-            echo "ERROR: juggler missing from $WIN_APP (no omni.ja juggler, no loose chrome/juggler)"; exit 1
-          fi
+          # JUGGLER GATE: omni.ja must carry juggler (else Playwright can't drive it)
+          [ -f "$WIN_APP/omni.ja" ] || { echo "ERROR: no omni.ja in $WIN_APP"; exit 1; }
+          python3 -c "import zipfile,sys; sys.exit(0 if any('juggler' in n.lower() for n in zipfile.ZipFile('$WIN_APP/omni.ja').namelist()) else 1)" \
+            || { echo "ERROR: juggler missing from $WIN_APP/omni.ja — Playwright can't drive it"; exit 1; }
           echo "juggler GATE OK (win)"
           mkdir -p out
           ( cd "$WIN_APP" && zip -qr "$GITHUB_WORKSPACE/out/${{ matrix.asset }}" . )   # firefox.exe at zip ROOT
@@ -220,6 +220,15 @@ jobs:
           for need in "Contents/MacOS/firefox" "Contents/Info.plist"; do
             [ -e "$APP/$need" ] || { echo "ERROR: missing $need"; exit 1; }
           done
+          echo "=== Info.plist well-formed + required keys (a malformed plist → Finder 'damaged') ==="
+          plutil -lint "$APP/Contents/Info.plist"
+          for key in CFBundleExecutable CFBundleIdentifier CFBundleShortVersionString; do
+            plutil -extract "$key" raw -o - "$APP/Contents/Info.plist" >/dev/null \
+              || { echo "ERROR: Info.plist missing $key"; exit 1; }
+          done
+          EXEC="$(plutil -extract CFBundleExecutable raw -o - "$APP/Contents/Info.plist")"
+          [ -e "$APP/Contents/MacOS/$EXEC" ] \
+            || { echo "ERROR: CFBundleExecutable '$EXEC' has no matching binary in Contents/MacOS"; exit 1; }
           echo "=== verify NO absolute symlinks in the .app (relative-internal ones are fine) ==="
           BAD="$(find "$APP" -type l -print0 | xargs -0 -I{} sh -c 't=$(readlink "{}"); case "$t" in /*) echo "{} -> $t";; esac')"
           [ -z "$BAD" ] || { echo "ERROR: absolute symlinks in .app (break on user machines):"; echo "$BAD" | head -5; exit 1; }
@@ -324,6 +333,20 @@ jobs:
       - name: Download all build assets
         uses: actions/download-artifact@v4
         with: { pattern: asset-*, path: dl, merge-multiple: true }
+      - name: Assert all 5 target archives present (no silent partial release)
+        run: |
+          cd dl
+          EXPECTED="
+          firefox-150.0.1-stealth-linux-x86_64.tar.gz
+          firefox-150.0.1-stealth-linux-arm64.tar.gz
+          firefox-150.0.1-stealth-win-x86_64.zip
+          firefox-150.0.1-stealth-macos-arm64.tar.gz
+          firefox-150.0.1-stealth-macos-x86_64.tar.gz
+          "
+          for a in $EXPECTED; do
+            [ -s "$a" ] || { echo "ERROR: missing/empty release asset: $a (a build leg silently dropped out?)"; exit 1; }
+          done
+          echo "all 5 target archives present"
       - name: Generate checksums.txt
         run: |
           cd dl; ls -la
@@ -344,6 +367,7 @@ jobs:
           name: invisible_firefox (150.0.1) rev ${{ steps.tag.outputs.tag }}
           draft: true
           prerelease: false
+          fail_on_unmatched_files: true
           files: |
             dl/*.tar.gz
             dl/*.zip
