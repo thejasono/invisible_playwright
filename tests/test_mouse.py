@@ -182,7 +182,11 @@ def test_hover_triggers_mouseenter(firefox_binary):
             "onmouseenter=\"window.__h=true\">x</div>"
         ))
         page.locator("#h").hover()
-        assert page.evaluate("window.__h") is True
+        # Wait for the event rather than reading immediately: under load / on a
+        # virtual display the mouseenter can land a beat after hover() returns,
+        # which made an instant read flaky. wait_for_function still fails (times
+        # out) if mouseenter genuinely never fires.
+        page.wait_for_function("() => window.__h === true", timeout=5000)
 
 
 # ────────────────────────────────────────────────────────────────────
