@@ -14,47 +14,52 @@ It deliberately covers the failure modes that HISTORICALLY shipped green:
                                      seed must be per-session, not per-readback)
   - headless navigator tells      → navigator.webdriver falsy, languages
                                      non-empty, plugins is a real PluginArray
+  - real HTTP navigation broken   → the page is served over http://127.0.0.1
+                                     and a `response` is awaited (not data:/about:blank)
 
 All of this is headless, NO screenshot → GPU-free (can't false-fail on the
-GPU-less hosted runners), and fully offline → safe in public CI. WebGL
-determinism is intentionally NOT checked here (it needs SWGL and can false-fail
-headless); it lives in the local proxy realness gate.
+GPU-less hosted runners). The HTTP server is loopback-only → no external network,
+no proxy, no secrets → safe in public CI. WebGL determinism is intentionally NOT
+checked here (needs SWGL, false-fails headless); it lives in the local realness
+gate, along with the faithful cross-origin iframe test (issue #20 — a same-origin
+in-gate iframe is a weak proxy AND races Juggler's frame tracking).
 
-NOT covered here on purpose:
-  - Cross-origin iframe (issue #20): a same-origin srcdoc/data iframe is a weak
-    proxy for it AND races Juggler's frame tracking (the frame re-navigates, its
-    id changes → "Frame was detached"). The faithful #20 sentinel is
-    `tests/test_cross_origin_iframe.py` (e2e, two localhost origins); wire that
-    as its own gate job rather than a fragile in-gate check.
-
-Robustness (learned the hard way):
-  - The DOM is built on `about:blank` via `innerHTML`, NOT a `data:` URL. An
-    unencoded `data:text/html,...` URL gets re-normalized (re-navigated to its
-    percent-encoded form) by Firefox; on the slower windows-latest runner that
-    async re-nav races the evaluates → "execution context destroyed by
-    navigation". `about:blank` is canonical and never re-navigates.
-  - `set_content` is NOT usable — its document.write is rejected on this build
-    ("operation is insecure").
-  - A transient "context destroyed / detached / target closed" still gets ONE
-    logged retry; a genuinely broken binary fails BOTH attempts → gate fails.
+Robustness (learned the hard way, across many runner round-trips):
+  - The page is served over real `http://127.0.0.1:<port>/`. A `data:` URL gets
+    re-normalized (re-navigated) by Firefox, `about:blank` + a redundant goto
+    intermittently "destroys the execution context by navigation", and both can
+    carry a CSP that blocks `eval()`. A plain loopback HTTP page has none of that.
+  - Every `page.evaluate` is an ARROW FUNCTION (Playwright callFunction, never
+    eval'd) — immune to a page CSP that blocks eval. Listeners are wired in an
+    inline <script> on the served page, not via inline on* attributes.
+  - Transient "context destroyed / detached / target closed" gets up to 2 logged
+    retries (the windows-latest headless runner is interaction-flaky); a
+    genuinely broken binary fails ALL attempts → the gate fails.
 
 Usage:  python ci_drive_gate.py /path/to/firefox[.exe | .app/Contents/MacOS/firefox]
 Exit 0 + "DRIVE GATE OK ..." on success; non-zero with a reason on failure.
 """
 from __future__ import annotations
 
+import http.server
+import socketserver
 import sys
+import threading
 
-from playwright.sync_api import sync_playwright
-
-# DOM built on about:blank (no data: URL to re-normalize → no spurious nav).
-# No inline onclick — inline handlers are CSP-sensitive; we wire the listener
-# via addEventListener inside the (function, not eval'd) setup call below.
-BODY = (
+# Full page served over loopback http. Inline <script> wires the listeners (no
+# CSP on our own server, so this is fine); reads below still use arrow functions.
+HTML = (
+    "<!doctype html><html><head><title>dt</title></head><body>"
     "<h1 id=x>hello-drive</h1>"
     "<button id=b>go</button>"
     "<input id=inp>"
-)
+    "<script>"
+    "window.__clicked=0;window.__moves=0;"
+    "document.getElementById('b').addEventListener('click',function(){window.__clicked=1;});"
+    "window.addEventListener('mousemove',function(){window.__moves++;});"
+    "</script>"
+    "</body></html>"
+).encode()
 
 # Identical 2D draw, evaluated twice in one session. The stealth canvas spoof is
 # seeded per-session (see fingerprint-consistency rule), so two identical draws
@@ -67,29 +72,37 @@ CANVAS_DRAW = (
 
 # Substrings of errors that are transient infra/timing, NOT a broken binary.
 _TRANSIENT = ("context was destroyed", "frame was detached", "target closed",
-              "because of a navigation")
+              "because of a navigation", "timeout")
 
 
-def _drive(exe: str) -> str:
+class _Handler(http.server.BaseHTTPRequestHandler):
+    def do_GET(self):  # noqa: N802
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(HTML)))
+        self.end_headers()
+        self.wfile.write(HTML)
+
+    def log_message(self, *a):  # silence the per-request stderr noise
+        pass
+
+
+def _start_server():
+    srv = socketserver.TCPServer(("127.0.0.1", 0), _Handler)
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    return srv, srv.server_address[1]
+
+
+def _drive(exe: str, url: str) -> str:
     """One full drive attempt. Returns the UA on success; raises on failure."""
+    from playwright.sync_api import sync_playwright
+
     with sync_playwright() as p:
         browser = p.firefox.launch(executable_path=exe, headless=True)
         try:
             page = browser.new_page()
-            page.goto("about:blank")  # canonical, never re-navigates
-            # Build the DOM + wire click/mousemove listeners in one shot. Passed
-            # as a FUNCTION (Playwright callFunction, not eval) so a page CSP that
-            # blocks eval()/inline-handlers can't break the gate. All evaluates
-            # below are arrow functions for the same reason.
-            page.evaluate(
-                "(html) => {"
-                " document.body.innerHTML = html;"
-                " document.getElementById('b').addEventListener('click', () => { window.__clicked = 1; });"
-                " window.__moves = 0;"
-                " window.addEventListener('mousemove', () => { window.__moves++; });"
-                "}",
-                BODY,
-            )
+            resp = page.goto(url, wait_until="load")
+            assert resp and resp.ok, f"navigation to {url} failed: {resp.status if resp else 'no response'}"
 
             ua = page.evaluate("() => navigator.userAgent")
             webdriver = page.evaluate("() => navigator.webdriver")
@@ -119,7 +132,7 @@ def _drive(exe: str) -> str:
     assert "Firefox" in ua, f"unexpected UA (binary not driving correctly): {ua!r}"
     assert text == "hello-drive", f"DOM/JS roundtrip failed: {text!r}"
     assert not webdriver, f"navigator.webdriver leaked True (stealth regression): {webdriver!r}"
-    assert clicked == 1, "page.click() did not fire onclick — mouse-event synthesis broken (firefox-2 class)"
+    assert clicked == 1, "page.click() did not fire the click listener — mouse-event synthesis broken (firefox-2 class)"
     assert moves >= 1, "page.mouse.move() produced no mousemove — jugglerSendMouseEvent regression"
     assert typed == "ok", f"page.keyboard.type() failed: {typed!r}"
     assert canvas_a == canvas_b, "canvas non-deterministic across identical draws (stealth seed broken → bot tell)"
@@ -129,21 +142,26 @@ def _drive(exe: str) -> str:
 
 
 def main(exe: str) -> int:
+    srv, port = _start_server()
+    url = f"http://127.0.0.1:{port}/"
     last = None
-    for attempt in (1, 2):
-        try:
-            ua = _drive(exe)
-            if attempt > 1:
-                print(f"(note: drive succeeded on retry {attempt} after a transient error)")
-            print(f"DRIVE GATE OK | UA={ua} | click+mousemove+keyboard+canvas-determinism+navsurface=ok")
-            return 0
-        except Exception as e:  # noqa: BLE001 — gate: any failure must surface
-            last = e
-            msg = str(e).lower()
-            if attempt == 1 and any(t in msg for t in _TRANSIENT):
-                print(f"(transient error on attempt 1, retrying once): {e}", file=sys.stderr)
-                continue
-            break
+    try:
+        for attempt in (1, 2, 3):
+            try:
+                ua = _drive(exe, url)
+                if attempt > 1:
+                    print(f"(note: drive succeeded on attempt {attempt} after a transient error)")
+                print(f"DRIVE GATE OK | UA={ua} | http+click+mousemove+keyboard+canvas-determinism+navsurface=ok")
+                return 0
+            except Exception as e:  # noqa: BLE001 — gate: any failure must surface
+                last = e
+                msg = str(e).lower()
+                if attempt < 3 and any(t in msg for t in _TRANSIENT):
+                    print(f"(transient error on attempt {attempt}, retrying): {e}", file=sys.stderr)
+                    continue
+                break
+    finally:
+        srv.shutdown()
     print(f"DRIVE GATE FAILED: {last}", file=sys.stderr)
     return 1
 
