@@ -16,24 +16,11 @@ and covers each patched call site:
 """
 from __future__ import annotations
 
-import sys
 import urllib.parse
 
 import pytest
 
 from invisible_playwright import InvisiblePlaywright
-from invisible_playwright.constants import BINARY_ENTRY_REL
-
-
-@pytest.fixture(scope="session")
-def firefox_binary():
-    if sys.platform not in BINARY_ENTRY_REL:
-        pytest.skip(f"unsupported platform: {sys.platform}")
-    from invisible_playwright.download import cache_dir_for_version
-    entry = cache_dir_for_version() / BINARY_ENTRY_REL[sys.platform]
-    if not entry.exists():
-        pytest.skip("patched Firefox binary not cached; run `invisible-playwright fetch`")
-    return str(entry)
 
 
 def _data_url(html: str) -> str:

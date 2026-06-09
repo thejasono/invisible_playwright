@@ -31,7 +31,6 @@ random free ports.
 from __future__ import annotations
 
 import socket
-import sys
 import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
@@ -163,22 +162,6 @@ def cross_origin_harness():
     finally:
         sa.shutdown()
         sb.shutdown()
-
-
-@pytest.fixture(scope="session")
-def firefox_binary():
-    """Locate the cached patched Firefox binary or skip."""
-    from invisible_playwright.constants import BINARY_ENTRY_REL
-    if sys.platform not in BINARY_ENTRY_REL:
-        pytest.skip(f"unsupported platform: {sys.platform}")
-    from invisible_playwright.download import cache_dir_for_version
-    entry = cache_dir_for_version() / BINARY_ENTRY_REL[sys.platform]
-    if not entry.exists():
-        pytest.skip(
-            "patched Firefox binary not cached; run `invisible-playwright fetch` "
-            "to enable E2E tests"
-        )
-    return str(entry)
 
 
 @pytest.mark.e2e

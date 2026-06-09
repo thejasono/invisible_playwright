@@ -22,35 +22,12 @@ For dev iteration:
 from __future__ import annotations
 
 import http.server
-import os
 import socketserver
-import sys
 import threading
 
 import pytest
 
 from invisible_playwright import InvisiblePlaywright
-from invisible_playwright.constants import BINARY_ENTRY_REL
-
-
-@pytest.fixture(scope="session")
-def firefox_binary():
-    env_path = os.environ.get("INVPW_BINARY_PATH")
-    if env_path:
-        from pathlib import Path
-        if Path(env_path).exists():
-            return env_path
-        pytest.skip(f"INVPW_BINARY_PATH={env_path!r} does not exist")
-    if sys.platform not in BINARY_ENTRY_REL:
-        pytest.skip(f"unsupported platform: {sys.platform}")
-    from invisible_playwright.download import cache_dir_for_version
-    entry = cache_dir_for_version() / BINARY_ENTRY_REL[sys.platform]
-    if not entry.exists():
-        pytest.skip(
-            "patched Firefox not cached; run `python -m invisible_playwright fetch` "
-            "or set INVPW_BINARY_PATH"
-        )
-    return str(entry)
 
 
 # ---------------------------------------------------------------------------

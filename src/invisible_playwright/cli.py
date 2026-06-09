@@ -10,7 +10,15 @@ from .constants import BINARY_VERSION, FIREFOX_UPSTREAM_VERSION
 from .download import cache_root, ensure_binary
 
 
-def _cmd_fetch(_args: argparse.Namespace) -> int:
+def _cmd_fetch(args: argparse.Namespace) -> int:
+    # --force: re-download even if already cached (drop the cached version dir,
+    # then let ensure_binary fetch it fresh). Useful to recover a corrupted cache
+    # or re-pull after a re-published release.
+    if getattr(args, "force", False):
+        from .download import cache_dir_for_version
+        d = cache_dir_for_version()
+        if d.exists():
+            shutil.rmtree(d, ignore_errors=True)
     path = ensure_binary()
     print(path)
     return 0
@@ -52,7 +60,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     sub = p.add_subparsers(dest="cmd")
 
-    sub.add_parser("fetch", help="download the patched Firefox binary")
+    fetch_p = sub.add_parser("fetch", help="download the patched Firefox binary")
+    fetch_p.add_argument("--force", action="store_true",
+                         help="re-download even if already cached")
     sub.add_parser("path", help="print the absolute path to the cached binary")
     sub.add_parser("version", help="print wrapper and binary versions")
     sub.add_parser("clear-cache", help="remove all cached binaries")

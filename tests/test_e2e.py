@@ -8,33 +8,9 @@ handling) do not need a binary and always run.
 """
 from __future__ import annotations
 
-import sys
-
 import pytest
 
 from invisible_playwright import InvisiblePlaywright
-from invisible_playwright.constants import BINARY_ENTRY_REL
-
-
-@pytest.fixture(scope="session")
-def firefox_binary():
-    """Locate the patched Firefox binary or skip the calling test.
-
-    We do NOT trigger a network download here: ``ensure_binary`` would
-    pull a multi-hundred-megabyte archive from a private release,
-    which is not appropriate inside a unit/E2E test run. Instead we
-    look for an already-cached binary; if missing we skip.
-    """
-    if sys.platform not in BINARY_ENTRY_REL:
-        pytest.skip(f"unsupported platform: {sys.platform}")
-    from invisible_playwright.download import cache_dir_for_version
-    entry = cache_dir_for_version() / BINARY_ENTRY_REL[sys.platform]
-    if not entry.exists():
-        pytest.skip(
-            "patched Firefox binary not cached; run `invisible-playwright fetch` "
-            "to enable E2E tests"
-        )
-    return str(entry)
 
 
 # ────────────────────────────────────────────────────────────────────

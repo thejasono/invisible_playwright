@@ -25,12 +25,9 @@ Run only this file:
 """
 from __future__ import annotations
 
-import sys
-
 import pytest
 
 from invisible_playwright import InvisiblePlaywright
-from invisible_playwright.constants import BINARY_ENTRY_REL
 
 
 PIN = {
@@ -43,29 +40,6 @@ PIN = {
     "audio.sample_rate": 48000,
     "audio.max_channel_count": 2,
 }
-
-
-@pytest.fixture(scope="session")
-def firefox_binary():
-    """See test_fingerprint_surface.firefox_binary for the lookup chain."""
-    import os
-    env_path = os.environ.get("INVPW_BINARY_PATH")
-    if env_path:
-        from pathlib import Path
-        if Path(env_path).exists():
-            return env_path
-        pytest.skip(f"INVPW_BINARY_PATH={env_path!r} does not exist")
-    if sys.platform not in BINARY_ENTRY_REL:
-        pytest.skip(f"unsupported platform: {sys.platform}")
-    from invisible_playwright.download import cache_dir_for_version
-    entry = cache_dir_for_version() / BINARY_ENTRY_REL[sys.platform]
-    if not entry.exists():
-        pytest.skip(
-            "patched Firefox not cached; run "
-            "`python -m invisible_playwright fetch` first, or set "
-            "INVPW_BINARY_PATH to a local build"
-        )
-    return str(entry)
 
 
 @pytest.fixture(scope="module")

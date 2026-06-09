@@ -342,7 +342,9 @@ _FAKE_EGRESS = "203.0.113.7"  # RFC 5737 TEST-NET-3
 
 
 def _e2e_binary():
-    cand = os.environ.get("STEALTHFOX_E2E_BINARY")
+    # Honor both env vars so the whole e2e suite targets one binary from a single
+    # setting (INVPW_BINARY_PATH is what conftest's firefox_binary uses).
+    cand = os.environ.get("STEALTHFOX_E2E_BINARY") or os.environ.get("INVPW_BINARY_PATH")
     if cand and os.path.exists(cand):
         return cand
     built = r"C:\ff\source\obj-x86_64-pc-windows-msvc\dist\bin\firefox.exe"
