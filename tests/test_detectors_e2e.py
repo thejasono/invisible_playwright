@@ -1,24 +1,26 @@
 """E2E: run the REAL open-source detectors against the patched binary, on CI.
 
 Instead of our own hand-rolled signal checks, this loads the actual detection
-libraries and asserts the stealth build isn't flagged:
+libraries and uses their FULL API surface:
 
   * BotD (@fingerprintjs/botd, MIT) — the client-side bot detector that
-    FingerprintJS Pro itself uses. `detect()` must return ``bot == False``
-    (no automation/headless tell).
-  * FingerprintJS open-source (MIT) — `get().visitorId` must be present and
-    STABLE across two fresh launches with the same seed (an over-randomized
-    spoof would drift; a real browser is stable).
+    FingerprintJS Pro itself uses. We assert the aggregate verdict
+    (``detect().bot == False``) AND every one of its ~18 individual detectors
+    (``getDetections()``) returns ``bot == False``. The per-detector view is
+    why we could delete our hand-rolled ``test_botd_*`` mirrors — the real
+    library now covers each detector, with the same granularity.
+  * FingerprintJS open-source (MIT) — ``get()`` must return a ``visitorId``
+    that is STABLE across two fresh launches with the same seed (an
+    over-randomized spoof drifts), and a RICH component set (the fingerprint
+    surface is real, not a stub).
 
 Everything is hermetic: the libraries are vendored (tests/vendor/) and served
-from a localhost HTTP server, so there is no external CDN call (Firefox
-tracking-protection blocks the CDN anyway) and no IP/network dependency. It runs
-identically on a dev box and on a GitHub runner.
+from a localhost HTTP server — no external CDN call (Firefox tracking-protection
+blocks the CDN anyway) and no IP/network dependency. Runs identically on a dev
+box and on a GitHub runner.
 
-NOT covered here: FingerprintJS *Pro* (commercial, server-side, IP/residential
-analysis) — that can't be self-hosted and stays the local/self-hosted realness
-gate. CreepJS's full trust score needs its closed backend; only its client-side
-signals are reachable offline.
+NOT covered: FingerprintJS *Pro* (commercial, server-side, IP/residential
+analysis) — can't be self-hosted, stays the local realness gate.
 """
 from __future__ import annotations
 
@@ -44,13 +46,19 @@ window.__botd = null; window.__fp = null; window.__err = "";
 (async () => {{
   try {{
     const Botd = await import("/{_BOTD}");
-    const botd = await Botd.load();
-    window.__botd = botd.detect();                 // {{bot:false}} | {{bot:true,botKind}}
+    const botd = await Botd.load();          // load() collects internally
+    const verdict = botd.detect();           // {{bot:false}} | {{bot:true,botKind}}
+    const raw = botd.getDetections() || {{}}; // per-detector verdicts
+    const detections = {{}};
+    for (const k in raw) detections[k] = {{ bot: raw[k].bot, botKind: raw[k].botKind || null }};
+    window.__botd = {{ bot: verdict.bot, botKind: verdict.botKind || null, detections }};
   }} catch (e) {{ window.__err += " botd:" + e; }}
   try {{
     const fp = await FingerprintJS.load();
     const r = await fp.get();
-    window.__fp = {{ visitorId: r.visitorId }};
+    const keys = Object.keys(r.components || {{}});
+    const errored = keys.filter(k => r.components[k] && "error" in r.components[k]);
+    window.__fp = {{ visitorId: r.visitorId, componentKeys: keys, erroredComponents: errored }};
   }} catch (e) {{ window.__err += " fp:" + e; }}
   document.getElementById("state").textContent = "done";
 }})();
@@ -103,11 +111,10 @@ def detector_site():
 
 
 def _run_detectors(firefox_binary, url):
-    """Launch the binary, load the page, return (botd_result, fp_result, err)."""
+    """Launch the binary, load the page, return (botd, fp, err)."""
     with InvisiblePlaywright(seed=42, binary_path=firefox_binary) as browser:
         page = browser.new_page()
         page.goto(url, wait_until="load", timeout=45000)
-        # The detectors run async; wait until both finished (or errored).
         page.wait_for_function(
             "() => document.getElementById('state').textContent === 'done'",
             timeout=45000,
@@ -119,14 +126,19 @@ def _run_detectors(firefox_binary, url):
 
 
 @pytest.mark.e2e
-def test_botd_does_not_flag_automation(firefox_binary, detector_site):
-    """The real BotD detector must NOT flag the stealth build as a bot."""
+def test_botd_no_detector_flags_automation(firefox_binary, detector_site):
+    """The real BotD must not flag the build — aggregate AND every one of its
+    individual detectors (webDriver/userAgent/appVersion/plugins/process/... ).
+    """
     botd, _fp, err = _run_detectors(firefox_binary, detector_site.url)
-    assert botd is not None, f"BotD did not produce a result (err:{err!r})"
+    assert botd is not None, f"BotD produced no result (err:{err!r})"
     assert botd.get("bot") is False, (
-        f"BotD flagged the build as a bot: {botd!r} "
-        f"(botKind={botd.get('botKind')!r})"
+        f"BotD aggregate flagged a bot: botKind={botd.get('botKind')!r}"
     )
+    detections = botd.get("detections") or {}
+    assert detections, f"BotD getDetections() returned nothing (err:{err!r})"
+    flagged = {k: v.get("botKind") for k, v in detections.items() if v.get("bot")}
+    assert not flagged, f"BotD individual detectors flagged automation: {flagged}"
 
 
 @pytest.mark.e2e
@@ -141,4 +153,19 @@ def test_fingerprintjs_visitorid_stable_across_launches(firefox_binary, detector
     assert fp1["visitorId"] == fp2["visitorId"], (
         f"FingerprintJS visitorId drifted across launches: "
         f"{fp1['visitorId']!r} != {fp2['visitorId']!r} (per-session entropy = bot tell)"
+    )
+
+
+@pytest.mark.e2e
+def test_fingerprintjs_collects_rich_fingerprint(firefox_binary, detector_site):
+    """FingerprintJS must collect a RICH component surface (a real browser
+    exposes many signals; a stripped/blocked surface is itself suspicious).
+    We don't assert zero errored components (some are legitimately unsupported
+    per browser), only that the surface is substantial and the id computed."""
+    _b, fp, err = _run_detectors(firefox_binary, detector_site.url)
+    assert fp and fp.get("visitorId"), f"FingerprintJS produced no id (err:{err!r})"
+    keys = fp.get("componentKeys") or []
+    assert len(keys) >= 15, (
+        f"FingerprintJS collected only {len(keys)} components — surface too thin "
+        f"(suppressed signals are themselves a tell): {keys}"
     )
