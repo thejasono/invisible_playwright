@@ -58,7 +58,7 @@ pip install git+https://github.com/feder-cr/invisible_playwright.git
 python -m invisible_playwright fetch      # one-time ~100 MB download, SHA256-verified
 ```
 
-Supported platforms: **Windows x86_64**, **Linux x86_64**.
+Supported platforms: **Windows x86_64**, **Linux x86_64 / arm64**, **macOS arm64 / x86_64**. On macOS the app is ad-hoc signed (not notarized): if Gatekeeper complains, clear the quarantine flag once with `xattr -dr com.apple.quarantine` on the cached `Firefox.app`.
 
 ---
 
@@ -181,6 +181,7 @@ Full list of pinnable keys, how pinning interacts with the Bayesian sampler, and
 
 ```bash
 invisible_playwright fetch          # download the binary if missing
+invisible_playwright fetch --force  # re-download even if cached
 invisible_playwright path           # print the absolute path to the cached binary
 invisible_playwright version        # wrapper and binary versions
 invisible_playwright clear-cache    # remove all cached binaries
