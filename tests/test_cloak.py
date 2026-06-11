@@ -91,9 +91,18 @@ def test_cloak_hides_window_but_keeps_rendering(firefox_binary):
         shot = page.screenshot()
         assert len(shot) > 3000, "cloaked window produced a blank screenshot (rendering paused)"
 
-        # 2) real WebGL present (native headless has none) -> headed pipeline intact.
+        # 2) headed pipeline intact: a real WebGL context (Playwright's native
+        #    headless has none). Linux (Xvfb + llvmpipe) and Windows (WARP) give a
+        #    software context on the GPU-less runners, so a missing context there
+        #    is a real regression -> hard fail. macOS GitHub runners expose NO
+        #    WebGL in the CI session at all (even vanilla Firefox), and macOS has
+        #    no software-GL fallback; the cloak's "still rendering" property is
+        #    already proven by the non-blank screenshot above, so we don't also
+        #    require a live WebGL context there.
         renderer = page.evaluate(_WEBGL_RENDERER)
-        assert renderer and renderer != "NO-WEBGL", f"no real WebGL under cloak: {renderer!r}"
+        webgl_ok = bool(renderer) and renderer != "NO-WEBGL"
+        if not (sys.platform == "darwin" and not webgl_ok):
+            assert webgl_ok, f"no real WebGL under cloak: {renderer!r}"
 
         # 3) the window is actually hidden (per-platform).
         if sys.platform == "win32":

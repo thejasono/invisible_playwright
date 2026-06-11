@@ -344,11 +344,16 @@ jobs:
       # CLOAK + WEBGL-MASKING GUARDS — run the wrapper's e2e cloak/gamma checks
       # against THIS leg's freshly-built artifact, on its native runner. The
       # wrapper's headless=True is headed+hidden (cloak on Win/macOS, its own
-      # Xvfb on Linux), so software-GL rendering works on the GPU-less hosts.
-      # test_cloak asserts the window is hidden (Windows DWMWA_CLOAKED / macOS
-      # CGWindowAlpha) AND still renders — the macOS leg is the only place the
-      # cocoa cloak patch gets RUN. The webgl guard catches a regression of the
-      # gamma readPixels noise back to the pixelscan-maskable ±1 spike form.
+      # Xvfb on Linux). Linux (Xvfb + llvmpipe) and Windows (WARP) give a
+      # software WebGL context on the GPU-less hosts, so the WebGL-dependent
+      # assertions run there. macOS GitHub runners expose NO WebGL in the CI
+      # session at all (even vanilla Firefox; macOS has no software-GL fallback),
+      # so on the mac legs the WebGL checks self-skip and the cloak is validated
+      # via its non-blank screenshot + CGWindowAlpha == 0. test_cloak asserts the
+      # window is hidden (Windows DWMWA_CLOAKED / macOS CGWindowAlpha) AND still
+      # renders — the macOS leg is the only place the cocoa cloak patch gets RUN.
+      # The webgl guard catches a regression of the gamma readPixels noise back to
+      # the pixelscan-maskable ±1 spike form (covered on Linux + Windows).
       - name: Install pyobjc Quartz (macOS — to read the cloak window alpha)
         if: matrix.kind == 'mac'
         run: python -m pip install --quiet pyobjc-framework-Quartz

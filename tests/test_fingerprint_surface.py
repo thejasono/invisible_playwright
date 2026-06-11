@@ -27,6 +27,7 @@ Run only this file:
 from __future__ import annotations
 
 import re
+import sys
 
 import pytest
 
@@ -296,6 +297,12 @@ def test_webgl_readpixels_no_masking_signature(page):
     ~300+ 'spikes' and pixelscan flagged it as masking; the gamma remap leaves
     the gradient smooth (~0 spikes). Regression guard for the gamma fix."""
     res = _ev(page, _WEBGL_MASKING_PROBE)
+    if res.get("error") == "no-webgl" and sys.platform == "darwin":
+        pytest.skip(
+            "macOS CI runners expose no WebGL (no software-GL fallback); the gamma "
+            "readPixels remap is platform-agnostic C++ and is exercised by the Linux "
+            "(Xvfb/llvmpipe) and Windows (WARP) gates."
+        )
     assert "error" not in res, f"WebGL probe failed: {res}"
     # genuine / gamma -> ~0; the rejected +-1 algorithm produced ~320.
     assert res["spikes"] < 30, (
