@@ -87,12 +87,30 @@ def _start_server():
     return srv, srv.server_address[1]
 
 
+# FF150 + Fission auto-loads about:newtab (TopSitesFeed) ~100ms-1s after a tab's
+# first navigation — a cross-process BC swap that REPLACES the page out from under
+# the test. The wrapper always disables it (see prefs.py); raw Playwright does not,
+# so the binary's realistic config must set it here too. Without this the drive page
+# can vanish mid-sequence (it loses the race whenever an action adds latency, e.g.
+# the human-cursor path), surfacing as a phantom "waiting for locator" timeout that
+# is an environment artifact, not a binary defect.
+_REALISTIC_PREFS = {
+    "browser.startup.page": 0,
+    "browser.newtabpage.enabled": False,
+    "browser.newtab.preload": False,
+    "browser.newtabpage.activity-stream.feeds.topsites": False,
+    "browser.newtabpage.activity-stream.feeds.section.topstories": False,
+    "browser.newtabpage.activity-stream.enabled": False,
+}
+
+
 def _drive(exe: str, url: str, full: bool) -> str:
     """One full drive attempt. Returns the UA on success; raises on failure."""
     from playwright.sync_api import sync_playwright
 
     with sync_playwright() as p:
-        browser = p.firefox.launch(executable_path=exe, headless=True)
+        browser = p.firefox.launch(executable_path=exe, headless=True,
+                                   firefox_user_prefs=_REALISTIC_PREFS)
         try:
             page = browser.new_page()
             resp = page.goto(url, wait_until="load")
