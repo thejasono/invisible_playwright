@@ -3,7 +3,7 @@
   {
    "vendor": "Google Inc. (NVIDIA)",
    "renderer_out": "ANGLE (NVIDIA, NVIDIA GeForce GTX 980 Direct3D11 vs_5_0 ps_5_0), or similar",
-   "prob": 0.462396,
+   "prob": 0.470921,
    "prefs": {
     "zoom.stealth.webgl.renderer": "ANGLE (NVIDIA, NVIDIA GeForce GTX 980 Direct3D11 vs_5_0 ps_5_0, D3D11)",
     "zoom.stealth.webgl.vendor": "Google Inc. (NVIDIA)",
@@ -19,7 +19,7 @@
   {
    "vendor": "Google Inc. (Intel)",
    "renderer_out": "ANGLE (Intel, Intel(R) HD Graphics Direct3D11 vs_5_0 ps_5_0), or similar",
-   "prob": 0.192201,
+   "prob": 0.195745,
    "prefs": {
     "zoom.stealth.webgl.renderer": "ANGLE (Intel, Intel(R) HD Graphics Direct3D11 vs_5_0 ps_5_0, D3D11)",
     "zoom.stealth.webgl.vendor": "Google Inc. (Intel)",
@@ -35,7 +35,7 @@
   {
    "vendor": "Google Inc. (Intel)",
    "renderer_out": "ANGLE (Intel, Intel(R) HD Graphics 400 Direct3D11 vs_5_0 ps_5_0), or similar",
-   "prob": 0.157382,
+   "prob": 0.160284,
    "prefs": {
     "zoom.stealth.webgl.renderer": "ANGLE (Intel, Intel(R) HD Graphics 400 Direct3D11 vs_5_0 ps_5_0, D3D11)",
     "zoom.stealth.webgl.vendor": "Google Inc. (Intel)",
@@ -51,7 +51,7 @@
   {
    "vendor": "Google Inc. (AMD)",
    "renderer_out": "ANGLE (AMD, Radeon HD 3200 Graphics Direct3D11 vs_5_0 ps_5_0), or similar",
-   "prob": 0.084958,
+   "prob": 0.086524,
    "prefs": {
     "zoom.stealth.webgl.renderer": "ANGLE (AMD, Radeon HD 3200 Graphics Direct3D11 vs_5_0 ps_5_0, D3D11)",
     "zoom.stealth.webgl.vendor": "Google Inc. (AMD)",
@@ -67,7 +67,7 @@
   {
    "vendor": "Google Inc. (AMD)",
    "renderer_out": "ANGLE (AMD, Radeon R9 200 Series Direct3D11 vs_5_0 ps_5_0), or similar",
-   "prob": 0.052925,
+   "prob": 0.053901,
    "prefs": {
     "zoom.stealth.webgl.renderer": "ANGLE (AMD, Radeon R9 200 Series Direct3D11 vs_5_0 ps_5_0, D3D11)",
     "zoom.stealth.webgl.vendor": "Google Inc. (AMD)",
@@ -81,25 +81,9 @@
    }
   },
   {
-   "vendor": "Google Inc. (NVIDIA)",
-   "renderer_out": "ANGLE (NVIDIA, NVIDIA GeForce GTX 480 Direct3D11 vs_5_0 ps_5_0), or similar",
-   "prob": 0.013928,
-   "prefs": {
-    "zoom.stealth.webgl.renderer": "ANGLE (NVIDIA, NVIDIA GeForce GTX 480 Direct3D11 vs_5_0 ps_5_0, D3D11)",
-    "zoom.stealth.webgl.vendor": "Google Inc. (NVIDIA)",
-    "zoom.stealth.webgl.extensions": "ANGLE_instanced_arrays,EXT_blend_minmax,EXT_color_buffer_half_float,EXT_float_blend,EXT_frag_depth,EXT_shader_texture_lod,EXT_sRGB,EXT_texture_compression_bptc,EXT_texture_compression_rgtc,EXT_texture_filter_anisotropic,OES_element_index_uint,OES_fbo_render_mipmap,OES_standard_derivatives,OES_texture_float,OES_texture_float_linear,OES_texture_half_float,OES_texture_half_float_linear,OES_vertex_array_object,WEBGL_color_buffer_float,WEBGL_compressed_texture_s3tc,WEBGL_compressed_texture_s3tc_srgb,WEBGL_debug_renderer_info,WEBGL_debug_shaders,WEBGL_depth_texture,WEBGL_draw_buffers,WEBGL_lose_context,WEBGL_provoking_vertex",
-    "zoom.stealth.webgl2.extensions": "EXT_color_buffer_float,EXT_float_blend,EXT_texture_compression_bptc,EXT_texture_compression_rgtc,EXT_texture_filter_anisotropic,OES_draw_buffers_indexed,OES_texture_float_linear,OVR_multiview2,WEBGL_compressed_texture_s3tc,WEBGL_compressed_texture_s3tc_srgb,WEBGL_debug_renderer_info,WEBGL_debug_shaders,WEBGL_lose_context,WEBGL_provoking_vertex",
-    "zoom.stealth.webgl.int_params": "2849|1,2885|1029,2886|2305,2931|1,2932|513,2961|0,2962|519,2963|2147483647,2964|7680,2965|7680,2966|7680,2967|0,2968|2147483647,3074|1029,3314|0,3315|0,3316|0,3317|4,3330|0,3331|0,3332|0,3333|4,3379|16384,3408|4,3410|8,3411|8,3412|8,3413|8,3414|24,3415|0,10752|0,32777|32774,32824|0,32877|0,32878|0,32883|2048,32936|1,32937|4,32938|1,32968|0,32969|1,32970|0,32971|1,33000|2147483647,33001|2147483647,33170|4352,34016|33984,34024|16384,34045|2,34076|16384,34816|519,34817|7680,34818|7680,34819|7680,34852|8,34853|1029,34854|0,34855|0,34856|0,34857|0,34858|0,34859|0,34860|0,34877|32774,34921|16,34930|16,35071|2048,35076|-8,35077|7,35371|12,35373|12,35374|24,35375|24,35376|65536,35377|212988,35379|200704,35380|256,35657|4096,35658|16380,35659|120,35660|16,35661|32,35723|4352,35738|5121,35739|6408,35968|4,35978|120,35979|4,36003|0,36004|2147483647,36005|2147483647,36063|8,36183|8,36203|4294967294,36347|4095,36348|30,36349|1024,37137|0,37154|120,37157|120,37443|37444,37447|1000000000",
-    "zoom.stealth.webgl.int2_params": "2928|0:1,3386|32767:32767,33901|1:1024,33902|1:1",
-    "zoom.stealth.webgl.float_params": "",
-    "zoom.stealth.webgl.shader_precisions": "35633*36336|127:127:23,35633*36337|127:127:23,35633*36338|127:127:23,35633*36339|31:30:0,35633*36340|31:30:0,35633*36341|31:30:0,35632*36336|127:127:23,35632*36337|127:127:23,35632*36338|127:127:23,35632*36339|31:30:0,35632*36340|31:30:0,35632*36341|31:30:0",
-    "zoom.stealth.webgl2.enabled": true
-   }
-  },
-  {
    "vendor": "Google Inc. (Microsoft)",
    "renderer_out": "ANGLE (Microsoft, Microsoft Basic Render Driver Direct3D11 vs_5_0 ps_5_0), or similar",
-   "prob": 0.012535,
+   "prob": 0.012766,
    "prefs": {
     "zoom.stealth.webgl.renderer": "ANGLE (Microsoft, Microsoft Basic Render Driver Direct3D11 vs_5_0 ps_5_0, D3D11)",
     "zoom.stealth.webgl.vendor": "Google Inc. (Microsoft)",
@@ -115,9 +99,9 @@
   {
    "vendor": "Google Inc. (Intel)",
    "renderer_out": "ANGLE (Intel, Intel(R) HD Graphics Direct3D11 vs_5_0 ps_5_0)",
-   "prob": 0.006964,
+   "prob": 0.007092,
    "prefs": {
-    "zoom.stealth.webgl.renderer": "ANGLE (Intel, Intel(R) HD Graphics Direct3D11 vs_5_0 ps_5_0)",
+    "zoom.stealth.webgl.renderer": "ANGLE (Intel, Intel(R) HD Graphics Direct3D11 vs_5_0 ps_5_0, D3D11)",
     "zoom.stealth.webgl.vendor": "Google Inc. (Intel)",
     "zoom.stealth.webgl.extensions": "ANGLE_instanced_arrays,EXT_blend_minmax,EXT_color_buffer_half_float,EXT_float_blend,EXT_frag_depth,EXT_shader_texture_lod,EXT_sRGB,EXT_texture_compression_bptc,EXT_texture_compression_rgtc,EXT_texture_filter_anisotropic,OES_element_index_uint,OES_fbo_render_mipmap,OES_standard_derivatives,OES_texture_float,OES_texture_float_linear,OES_texture_half_float,OES_texture_half_float_linear,OES_vertex_array_object,WEBGL_color_buffer_float,WEBGL_compressed_texture_s3tc,WEBGL_compressed_texture_s3tc_srgb,WEBGL_debug_renderer_info,WEBGL_debug_shaders,WEBGL_depth_texture,WEBGL_draw_buffers,WEBGL_lose_context,WEBGL_provoking_vertex",
     "zoom.stealth.webgl2.extensions": "EXT_color_buffer_float,EXT_float_blend,EXT_texture_compression_bptc,EXT_texture_compression_rgtc,EXT_texture_filter_anisotropic,OES_draw_buffers_indexed,OES_texture_float_linear,OVR_multiview2,WEBGL_compressed_texture_s3tc,WEBGL_compressed_texture_s3tc_srgb,WEBGL_debug_renderer_info,WEBGL_debug_shaders,WEBGL_lose_context,WEBGL_provoking_vertex",
@@ -131,7 +115,7 @@
   {
    "vendor": "Google Inc. (Intel)",
    "renderer_out": "ANGLE (Intel, Intel(R) HD Graphics Direct3D11 vs_4_1 ps_4_1), or similar",
-   "prob": 0.004178,
+   "prob": 0.004255,
    "prefs": {
     "zoom.stealth.webgl.renderer": "ANGLE (Intel, Intel(R) HD Graphics Direct3D11 vs_4_1 ps_4_1, D3D11)",
     "zoom.stealth.webgl.vendor": "Google Inc. (Intel)",
@@ -145,27 +129,11 @@
    }
   },
   {
-   "vendor": "Google Inc. (Google)",
-   "renderer_out": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
-   "prob": 0.002786,
-   "prefs": {
-    "zoom.stealth.webgl.renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
-    "zoom.stealth.webgl.vendor": "Google Inc. (Google)",
-    "zoom.stealth.webgl.extensions": "ANGLE_instanced_arrays,EXT_blend_minmax,EXT_color_buffer_half_float,EXT_float_blend,EXT_frag_depth,EXT_shader_texture_lod,EXT_texture_compression_bptc,EXT_texture_compression_rgtc,EXT_texture_filter_anisotropic,EXT_sRGB,OES_element_index_uint,OES_fbo_render_mipmap,OES_standard_derivatives,OES_texture_float,OES_texture_float_linear,OES_texture_half_float,OES_texture_half_float_linear,OES_vertex_array_object,WEBGL_color_buffer_float,WEBGL_compressed_texture_astc,WEBGL_compressed_texture_etc,WEBGL_compressed_texture_etc1,WEBGL_compressed_texture_s3tc,WEBGL_compressed_texture_s3tc_srgb,WEBGL_debug_renderer_info,WEBGL_depth_texture,WEBGL_draw_buffers,WEBGL_lose_context,WEBGL_multi_draw",
-    "zoom.stealth.webgl2.extensions": "EXT_color_buffer_float,EXT_color_buffer_half_float,EXT_float_blend,EXT_texture_compression_bptc,EXT_texture_compression_rgtc,EXT_texture_filter_anisotropic,EXT_texture_norm16,OES_draw_buffers_indexed,OES_texture_float_linear,OVR_multiview2,WEBGL_clip_cull_distance,WEBGL_compressed_texture_astc,WEBGL_compressed_texture_etc,WEBGL_compressed_texture_etc1,WEBGL_compressed_texture_s3tc,WEBGL_compressed_texture_s3tc_srgb,WEBGL_debug_renderer_info,WEBGL_lose_context,WEBGL_multi_draw",
-    "zoom.stealth.webgl.int_params": "2849|1,2885|1029,2886|2305,2931|1,2932|513,2961|0,2962|519,2963|2147483647,2964|7680,2965|7680,2966|7680,2967|0,2968|2147483647,3074|1029,3314|0,3315|0,3316|0,3317|4,3330|0,3331|0,3332|0,3333|4,3379|8192,3408|4,3410|8,3411|8,3412|8,3413|8,3414|24,3415|0,10752|0,32777|32774,32824|0,32877|0,32878|0,32883|2048,32936|1,32937|4,32938|1,32968|0,32969|1,32970|0,32971|1,33000|2147483647,33001|2147483647,33170|4352,34016|33984,34024|8192,34045|15,34076|16384,34816|519,34817|7680,34818|7680,34819|7680,34852|8,34853|1029,34854|1029,34855|1029,34856|1029,34857|1029,34858|1029,34859|1029,34860|1029,34877|32774,34921|16,34930|32,35071|2048,35076|-8,35077|7,35371|14,35373|14,35374|60,35375|72,35376|65536,35377|245760,35379|245760,35380|256,35657|16384,35658|16384,35659|124,35660|32,35661|64,35723|4352,35738|5121,35739|6408,35968|4,35978|128,35979|4,36003|0,36004|2147483647,36005|2147483647,36063|8,36183|4,36203|4294967294,36345|1,36347|4096,36348|31,36349|4096,37137|0,37154|128,37157|128,37443|37444,37447|0",
-    "zoom.stealth.webgl.int2_params": "2928|0:1,3386|8192:8192,33901|1:1023,33902|1:1",
-    "zoom.stealth.webgl.float_params": "",
-    "zoom.stealth.webgl.shader_precisions": "35633*36336|15:15:10,35633*36337|15:15:10,35633*36338|127:127:23,35633*36339|15:14:0,35633*36340|15:14:0,35633*36341|31:30:0,35632*36336|15:15:10,35632*36337|15:15:10,35632*36338|127:127:23,35632*36339|15:14:0,35632*36340|15:14:0,35632*36341|31:30:0",
-    "zoom.stealth.webgl2.enabled": true
-   }
-  },
-  {
    "vendor": "Google Inc. (AMD)",
    "renderer_out": "ANGLE (AMD, Radeon R9 200 Series Direct3D11 vs_5_0 ps_5_0)",
-   "prob": 0.001393,
+   "prob": 0.001419,
    "prefs": {
-    "zoom.stealth.webgl.renderer": "ANGLE (AMD, Radeon R9 200 Series Direct3D11 vs_5_0 ps_5_0)",
+    "zoom.stealth.webgl.renderer": "ANGLE (AMD, Radeon R9 200 Series Direct3D11 vs_5_0 ps_5_0, D3D11)",
     "zoom.stealth.webgl.vendor": "Google Inc. (AMD)",
     "zoom.stealth.webgl.extensions": "ANGLE_instanced_arrays,EXT_blend_minmax,EXT_color_buffer_half_float,EXT_float_blend,EXT_frag_depth,EXT_shader_texture_lod,EXT_sRGB,EXT_texture_compression_bptc,EXT_texture_compression_rgtc,EXT_texture_filter_anisotropic,OES_element_index_uint,OES_fbo_render_mipmap,OES_standard_derivatives,OES_texture_float,OES_texture_float_linear,OES_texture_half_float,OES_texture_half_float_linear,OES_vertex_array_object,WEBGL_color_buffer_float,WEBGL_compressed_texture_s3tc,WEBGL_compressed_texture_s3tc_srgb,WEBGL_debug_renderer_info,WEBGL_debug_shaders,WEBGL_depth_texture,WEBGL_draw_buffers,WEBGL_lose_context,WEBGL_provoking_vertex",
     "zoom.stealth.webgl2.extensions": "EXT_color_buffer_float,EXT_float_blend,EXT_texture_compression_bptc,EXT_texture_compression_rgtc,EXT_texture_filter_anisotropic,OES_draw_buffers_indexed,OES_texture_float_linear,OVR_multiview2,WEBGL_compressed_texture_s3tc,WEBGL_compressed_texture_s3tc_srgb,WEBGL_debug_renderer_info,WEBGL_debug_shaders,WEBGL_lose_context,WEBGL_provoking_vertex",
@@ -179,9 +147,9 @@
   {
    "vendor": "Google Inc. (Intel)",
    "renderer_out": "ANGLE (Intel, Intel(R) HD Graphics Direct3D11 vs_4_0 ps_4_0)",
-   "prob": 0.001393,
+   "prob": 0.001419,
    "prefs": {
-    "zoom.stealth.webgl.renderer": "ANGLE (Intel, Intel(R) HD Graphics Direct3D11 vs_4_0 ps_4_0)",
+    "zoom.stealth.webgl.renderer": "ANGLE (Intel, Intel(R) HD Graphics Direct3D11 vs_4_0 ps_4_0, D3D11)",
     "zoom.stealth.webgl.vendor": "Google Inc. (Intel)",
     "zoom.stealth.webgl.extensions": "ANGLE_instanced_arrays,EXT_blend_minmax,EXT_color_buffer_half_float,EXT_float_blend,EXT_frag_depth,EXT_shader_texture_lod,EXT_sRGB,EXT_texture_compression_rgtc,EXT_texture_filter_anisotropic,OES_element_index_uint,OES_fbo_render_mipmap,OES_standard_derivatives,OES_texture_float,OES_texture_float_linear,OES_texture_half_float,OES_texture_half_float_linear,OES_vertex_array_object,WEBGL_color_buffer_float,WEBGL_compressed_texture_s3tc,WEBGL_compressed_texture_s3tc_srgb,WEBGL_debug_renderer_info,WEBGL_debug_shaders,WEBGL_depth_texture,WEBGL_draw_buffers,WEBGL_lose_context,WEBGL_provoking_vertex",
     "zoom.stealth.webgl2.extensions": "",
@@ -195,9 +163,9 @@
   {
    "vendor": "Google Inc. (NVIDIA)",
    "renderer_out": "ANGLE (NVIDIA, NVIDIA GeForce 8800 GTX Direct3D11 vs_4_0 ps_4_0)",
-   "prob": 0.001393,
+   "prob": 0.001419,
    "prefs": {
-    "zoom.stealth.webgl.renderer": "ANGLE (NVIDIA, NVIDIA GeForce 8800 GTX Direct3D11 vs_4_0 ps_4_0)",
+    "zoom.stealth.webgl.renderer": "ANGLE (NVIDIA, NVIDIA GeForce 8800 GTX Direct3D11 vs_4_0 ps_4_0, D3D11)",
     "zoom.stealth.webgl.vendor": "Google Inc. (NVIDIA)",
     "zoom.stealth.webgl.extensions": "ANGLE_instanced_arrays,EXT_blend_minmax,EXT_color_buffer_half_float,EXT_float_blend,EXT_frag_depth,EXT_shader_texture_lod,EXT_sRGB,EXT_texture_compression_rgtc,EXT_texture_filter_anisotropic,OES_element_index_uint,OES_fbo_render_mipmap,OES_standard_derivatives,OES_texture_float,OES_texture_float_linear,OES_texture_half_float,OES_texture_half_float_linear,OES_vertex_array_object,WEBGL_color_buffer_float,WEBGL_compressed_texture_s3tc,WEBGL_compressed_texture_s3tc_srgb,WEBGL_debug_renderer_info,WEBGL_debug_shaders,WEBGL_depth_texture,WEBGL_draw_buffers,WEBGL_lose_context,WEBGL_provoking_vertex",
     "zoom.stealth.webgl2.extensions": "",
@@ -211,9 +179,9 @@
   {
    "vendor": "Google Inc. (Intel)",
    "renderer_out": "ANGLE (Intel, Intel 945GM Direct3D11 vs_4_0 ps_4_0)",
-   "prob": 0.001393,
+   "prob": 0.001419,
    "prefs": {
-    "zoom.stealth.webgl.renderer": "ANGLE (Intel, Intel 945GM Direct3D11 vs_4_0 ps_4_0)",
+    "zoom.stealth.webgl.renderer": "ANGLE (Intel, Intel 945GM Direct3D11 vs_4_0 ps_4_0, D3D11)",
     "zoom.stealth.webgl.vendor": "Google Inc. (Intel)",
     "zoom.stealth.webgl.extensions": "ANGLE_instanced_arrays,EXT_blend_minmax,EXT_color_buffer_half_float,EXT_float_blend,EXT_frag_depth,EXT_shader_texture_lod,EXT_sRGB,EXT_texture_compression_rgtc,EXT_texture_filter_anisotropic,OES_element_index_uint,OES_fbo_render_mipmap,OES_standard_derivatives,OES_texture_float,OES_texture_half_float,OES_texture_half_float_linear,OES_vertex_array_object,WEBGL_color_buffer_float,WEBGL_compressed_texture_s3tc,WEBGL_compressed_texture_s3tc_srgb,WEBGL_debug_renderer_info,WEBGL_debug_shaders,WEBGL_depth_texture,WEBGL_draw_buffers,WEBGL_lose_context,WEBGL_provoking_vertex",
     "zoom.stealth.webgl2.extensions": "",
@@ -227,9 +195,9 @@
   {
    "vendor": "Google Inc. (Intel)",
    "renderer_out": "ANGLE (Intel, Intel(R) HD Graphics Direct3D11 vs_4_1 ps_4_1)",
-   "prob": 0.001393,
+   "prob": 0.001419,
    "prefs": {
-    "zoom.stealth.webgl.renderer": "ANGLE (Intel, Intel(R) HD Graphics Direct3D11 vs_4_1 ps_4_1)",
+    "zoom.stealth.webgl.renderer": "ANGLE (Intel, Intel(R) HD Graphics Direct3D11 vs_4_1 ps_4_1, D3D11)",
     "zoom.stealth.webgl.vendor": "Google Inc. (Intel)",
     "zoom.stealth.webgl.extensions": "ANGLE_instanced_arrays,EXT_blend_minmax,EXT_color_buffer_half_float,EXT_float_blend,EXT_frag_depth,EXT_shader_texture_lod,EXT_sRGB,EXT_texture_compression_rgtc,EXT_texture_filter_anisotropic,OES_element_index_uint,OES_fbo_render_mipmap,OES_standard_derivatives,OES_texture_float,OES_texture_float_linear,OES_texture_half_float,OES_texture_half_float_linear,OES_vertex_array_object,WEBGL_color_buffer_float,WEBGL_compressed_texture_s3tc,WEBGL_compressed_texture_s3tc_srgb,WEBGL_debug_renderer_info,WEBGL_debug_shaders,WEBGL_depth_texture,WEBGL_draw_buffers,WEBGL_lose_context,WEBGL_provoking_vertex",
     "zoom.stealth.webgl2.extensions": "EXT_color_buffer_float,EXT_float_blend,EXT_texture_compression_rgtc,EXT_texture_filter_anisotropic,OES_draw_buffers_indexed,OES_texture_float_linear,WEBGL_compressed_texture_s3tc,WEBGL_compressed_texture_s3tc_srgb,WEBGL_debug_renderer_info,WEBGL_debug_shaders,WEBGL_lose_context,WEBGL_provoking_vertex",
@@ -243,25 +211,9 @@
   {
    "vendor": "Google Inc. (NVIDIA)",
    "renderer_out": "ANGLE (NVIDIA, NVIDIA GeForce GTX 980 Direct3D11 vs_5_0 ps_5_0)",
-   "prob": 0.001393,
+   "prob": 0.001419,
    "prefs": {
-    "zoom.stealth.webgl.renderer": "ANGLE (NVIDIA, NVIDIA GeForce GTX 980 Direct3D11 vs_5_0 ps_5_0)",
-    "zoom.stealth.webgl.vendor": "Google Inc. (NVIDIA)",
-    "zoom.stealth.webgl.extensions": "ANGLE_instanced_arrays,EXT_blend_minmax,EXT_color_buffer_half_float,EXT_float_blend,EXT_frag_depth,EXT_shader_texture_lod,EXT_sRGB,EXT_texture_compression_bptc,EXT_texture_compression_rgtc,EXT_texture_filter_anisotropic,OES_element_index_uint,OES_fbo_render_mipmap,OES_standard_derivatives,OES_texture_float,OES_texture_float_linear,OES_texture_half_float,OES_texture_half_float_linear,OES_vertex_array_object,WEBGL_color_buffer_float,WEBGL_compressed_texture_s3tc,WEBGL_compressed_texture_s3tc_srgb,WEBGL_debug_renderer_info,WEBGL_debug_shaders,WEBGL_depth_texture,WEBGL_draw_buffers,WEBGL_lose_context,WEBGL_provoking_vertex",
-    "zoom.stealth.webgl2.extensions": "EXT_color_buffer_float,EXT_float_blend,EXT_texture_compression_bptc,EXT_texture_compression_rgtc,EXT_texture_filter_anisotropic,OES_draw_buffers_indexed,OES_texture_float_linear,OVR_multiview2,WEBGL_compressed_texture_s3tc,WEBGL_compressed_texture_s3tc_srgb,WEBGL_debug_renderer_info,WEBGL_debug_shaders,WEBGL_lose_context,WEBGL_provoking_vertex",
-    "zoom.stealth.webgl.int_params": "2849|1,2885|1029,2886|2305,2931|1,2932|513,2961|0,2962|519,2963|2147483647,2964|7680,2965|7680,2966|7680,2967|0,2968|2147483647,3074|1029,3314|0,3315|0,3316|0,3317|4,3330|0,3331|0,3332|0,3333|4,3379|16384,3408|4,3410|8,3411|8,3412|8,3413|8,3414|24,3415|0,10752|0,32777|32774,32824|0,32877|0,32878|0,32883|2048,32936|1,32937|4,32938|1,32968|0,32969|1,32970|0,32971|1,33000|2147483647,33001|2147483647,33170|4352,34016|33984,34024|16384,34045|2,34076|16384,34816|519,34817|7680,34818|7680,34819|7680,34852|8,34853|1029,34854|0,34855|0,34856|0,34857|0,34858|0,34859|0,34860|0,34877|32774,34921|16,34930|16,35071|2048,35076|-8,35077|7,35371|12,35373|12,35374|24,35375|24,35376|65536,35377|212988,35379|200704,35380|256,35657|4096,35658|16380,35659|120,35660|16,35661|32,35723|4352,35738|5121,35739|6408,35968|4,35978|120,35979|4,36003|0,36004|2147483647,36005|2147483647,36063|8,36183|8,36203|4294967294,36347|4095,36348|30,36349|1024,37137|0,37154|120,37157|120,37443|37444,37447|1000000000",
-    "zoom.stealth.webgl.int2_params": "2928|0:1,3386|32767:32767,33901|1:1024,33902|1:1",
-    "zoom.stealth.webgl.float_params": "",
-    "zoom.stealth.webgl.shader_precisions": "35633*36336|127:127:23,35633*36337|127:127:23,35633*36338|127:127:23,35633*36339|31:30:0,35633*36340|31:30:0,35633*36341|31:30:0,35632*36336|127:127:23,35632*36337|127:127:23,35632*36338|127:127:23,35632*36339|31:30:0,35632*36340|31:30:0,35632*36341|31:30:0",
-    "zoom.stealth.webgl2.enabled": true
-   }
-  },
-  {
-   "vendor": "Google Inc. (NVIDIA)",
-   "renderer_out": "ANGLE (NVIDIA, NVIDIA GeForce GTX 480 Direct3D11 vs_5_0 ps_5_0)",
-   "prob": 0.001393,
-   "prefs": {
-    "zoom.stealth.webgl.renderer": "ANGLE (NVIDIA, NVIDIA GeForce GTX 480 Direct3D11 vs_5_0 ps_5_0)",
+    "zoom.stealth.webgl.renderer": "ANGLE (NVIDIA, NVIDIA GeForce GTX 980 Direct3D11 vs_5_0 ps_5_0, D3D11)",
     "zoom.stealth.webgl.vendor": "Google Inc. (NVIDIA)",
     "zoom.stealth.webgl.extensions": "ANGLE_instanced_arrays,EXT_blend_minmax,EXT_color_buffer_half_float,EXT_float_blend,EXT_frag_depth,EXT_shader_texture_lod,EXT_sRGB,EXT_texture_compression_bptc,EXT_texture_compression_rgtc,EXT_texture_filter_anisotropic,OES_element_index_uint,OES_fbo_render_mipmap,OES_standard_derivatives,OES_texture_float,OES_texture_float_linear,OES_texture_half_float,OES_texture_half_float_linear,OES_vertex_array_object,WEBGL_color_buffer_float,WEBGL_compressed_texture_s3tc,WEBGL_compressed_texture_s3tc_srgb,WEBGL_debug_renderer_info,WEBGL_debug_shaders,WEBGL_depth_texture,WEBGL_draw_buffers,WEBGL_lose_context,WEBGL_provoking_vertex",
     "zoom.stealth.webgl2.extensions": "EXT_color_buffer_float,EXT_float_blend,EXT_texture_compression_bptc,EXT_texture_compression_rgtc,EXT_texture_filter_anisotropic,OES_draw_buffers_indexed,OES_texture_float_linear,OVR_multiview2,WEBGL_compressed_texture_s3tc,WEBGL_compressed_texture_s3tc_srgb,WEBGL_debug_renderer_info,WEBGL_debug_shaders,WEBGL_lose_context,WEBGL_provoking_vertex",

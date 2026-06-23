@@ -171,39 +171,6 @@ _WIN_VOICES = ",".join([
 
 
 # ──────────────────────────────────────────────────────────────────────
-#  Linux font compensation — Linux Firefox uses DejaVu / Liberation
-#  fonts which have wider/narrower glyphs than Windows Arial / Segoe.
-#  These per-generic factors are prepended to ``zoom.stealth.font.metrics``
-#  on Linux only; Windows-native rendering already matches the canonical
-#  widths so we pass an empty string (any factor !=1 would distort real
-#  metrics).
-# ──────────────────────────────────────────────────────────────────────
-
-_LINUX_GENERIC_FONT_FACTORS = (
-    # GENERIC factors are calibrated to FP Pro's font_preferences probe (NOT the 72px named-probe
-    # scale — verified 2026-06-18: recalibrating to the named-probe scale broke them, mono 121.55
-    # -> 112.4; the original values are correct for font_preferences). DejaVu/Liberation generics
-    # vs Windows targets: serif 0.920, sans 0.889, monospace 1.000, system-ui 0.910.
-    "serif|0.920,sans-serif|0.889,monospace|1.000,"
-    "system-ui|0.910,cursive|0.932,fantasy|0.812,"
-)
-
-# Calibration reference string for the C++ self-calibrating absolute-width path.
-# MUST be byte-identical to the probe the font_pool widths were measured with
-# (72px canvas measureText) and to the binary's zoom.stealth.font.calib_ref
-# default. Set explicitly so correctness never depends on the binary default.
-_FONT_CALIB_REF = "mmmmwwwwiiiillloooMMMMWWWW0123456789 The quick brown fox"
-# NOTE: there is intentionally NO per-OS collapse-base table here anymore.
-# The C++ font hook self-calibrates: `font_pool` stores the UNIVERSAL real
-# Windows measureText width per font and the binary divides it by the host's
-# own collapse base (gfxTextRun::StealthCollapseBase, summed from the list-head
-# font's per-glyph advances over zoom.stealth.font.calib_ref). So the SAME
-# stored value yields the exact Windows width on Windows, Linux AND macOS with
-# nothing to measure per platform. (Was: _COLLAPSE_BASE = {win32:1530, linux:2400}
-# + a darwin TODO — removed 2026-06-18 when the self-calibrating C++ landed.)
-
-
-# ──────────────────────────────────────────────────────────────────────
 #  Baseline — applied to every session regardless of Profile.
 # ──────────────────────────────────────────────────────────────────────
 
@@ -374,9 +341,37 @@ _BASELINE: Dict[str, Any] = {
     # DevTools anti-detection.
     "zoom.stealth.debugger.force_detach":                 True,
 
-    # Canvas substitution — additive ±1 noise over the OS base pattern;
-    # set to True to replace pixels with hash(seed, idx) instead.
-    "zoom.stealth.canvas.substitute_pixels":              False,
+    # Canvas substitution (Option B for canvas) — replace pixels with hash(seed,idx),
+    # uniform-skip (red-box exact, masking-safe) + full overwrite. Makes the canvas
+    # render a pure function of (seed) = HOST-INDEPENDENT (kills the DWrite-vs-FreeType
+    # text-raster leak: Canvas Hash + Font hash were the residual Win!=Linux signals).
+    # ON by default (paired with webgl.substitute_pixels).
+    "zoom.stealth.canvas.substitute_pixels":              True,
+
+    # WebGL substitution (Option B) — replace readback/snapshot RGB with
+    # hash(seed,idx), endpoint-preserving. Makes the WebGL render hash a pure
+    # function of (seed, dims) = HOST-INDEPENDENT, so no per-host hw_seed
+    # calibration is needed (the gamma path was per-host: NVIDIA/Arc-on-Win clean
+    # seeds went dirty on the Linux GL backend). ON by default.
+    "zoom.stealth.webgl.substitute_pixels":              True,
+
+    # WebGPU presence consistency. Firefox enables dom.webgpu.enabled by default on
+    # Windows/Mac-ARM but NOT on Linux/Mac-x64. We ALWAYS claim Windows, so force it ON
+    # on every host: a Windows FF MUST expose navigator.gpu (object); a Linux host leaving
+    # it undefined while the UA says Windows is an inconsistency tell (RE 2026-06-22:
+    # has_gpu was object on Win, undefined on WSL). adapter.info is empty (FF privacy
+    # default) so no GPU-name leak; requestAdapter may be null on a GPU-less host, which
+    # is itself plausible for a real Windows machine.
+    "dom.webgpu.enabled":                                 True,
+
+    # Audio fingerprint noise OFF. RE 2026-06-22: the per-session OfflineAudioContext
+    # noise (gated by hw_seed) was THE dominant driver of FP Pro tampering_ml on Windows
+    # — b005 Win dropped 0.4349 -> 0.0564 with audio noise alone disabled (canvas_text/
+    # emoji unchanged, so they were a red-herring). The audio value is already host-indep
+    # AND identical to a real FF's canonical OfflineAudioContext sum, so a fixed (un-noised)
+    # audio is NOT a linking signal (every real FF has the same value) — removing the noise
+    # matches real Firefox and clears the tampering flag.
+    "zoom.stealth.audio.fp_noise":                        False,
 
     # Navigator identity (locked to Windows Firefox 150).
     **_NAVIGATOR_OVERRIDES,
@@ -452,57 +447,15 @@ _WIN_VIRT_DESKTOP_WORKAROUNDS: Dict[str, Any] = {
 # ──────────────────────────────────────────────────────────────────────
 
 def _accept_language(locale: str) -> str:
+    # "<locale>, <base>" — the desktop-default shape (e.g. "en-US, en"). Firefox expands it
+    # to navigator.languages=["en-US","en"] AND (via the patched binary) the q-valued header
+    # "en-US,en;q=0.5". The patched nsHttpHandler (STEALTHFOX, RE 2026-06-23) builds the
+    # Accept-Language header from THIS pref even when juggler sets a per-context locale
+    # override, so header and navigator.languages stay consistent 2/2 — the most authentic
+    # (real desktop) form. Supersedes the 2026-06-22 single-tag workaround.
     lang = locale.replace("_", "-")
     base = lang.split("-")[0]
     return f"{lang}, {base}" if base != lang else lang
-
-
-def _font_metrics_for_platform(profile_metrics: str) -> str:
-    """Return ``zoom.stealth.font.metrics`` value.
-
-    The C++ whitelist hook (``gfxPlatformFontList::FindAndAddFamiliesLocked``)
-    backs EVERY whitelisted *named* family with the list-head family on every
-    platform. Without per-font width factors, that means each named font
-    (Arial, Times New Roman, Courier New, …) renders with identical glyphs and
-    collapses to a SINGLE canvas ``measureText`` width — a non-physical
-    1-distinct-width result that strict JS-sensor anti-bots flag via their
-    font probe. The per-font factors in ``profile_metrics``
-    (``arial|0.978,arial black|1.168,…``) spread the fabricated families back
-    to distinct, realistic, deterministic-per-seed widths, so we apply them on
-    EVERY platform (previously suppressed on Windows/mac, which left the
-    collapse in place — only the CSS-generic vector, which FP Pro probes, was
-    ever correct there).
-
-    These factors only key *named* families. CSS generics
-    (serif/sans-serif/monospace/system-ui) bypass the whitelist entirely and
-    render at the host's native widths, so they are never present in
-    ``profile_metrics`` and stay unfactored — FP Pro's ``font_preferences``
-    probe (which measures the generics) is unaffected. That is also why
-    applying named-font factors here does NOT distort the canonical generic
-    widths.
-
-    Linux ADDITIONALLY needs generic-family compensation
-    (``_LINUX_GENERIC_FONT_FACTORS``) because DejaVu/Liberation generics render
-    wider/narrower than the Windows widths the spoofed profile claims; on
-    Windows/mac the generics already render native, so no generic compensation
-    is applied — only the named-font factors.
-    """
-    if not profile_metrics:
-        return ""
-    # profile_metrics arrives as "name|<universal_real_width>,..." (host-independent
-    # absolute widths, e.g. "arial|2256.7"). We pass them through UNCHANGED: the C++
-    # hook treats a value >= 10 as an ABSOLUTE target measureText width and divides it
-    # by the host's own collapse base (self-calibrating), so the SAME value yields the
-    # exact Windows width on Windows, Linux AND macOS. No per-OS division here.
-    metrics = profile_metrics
-    # Linux ADDITIONALLY needs CSS-generic compensation (DejaVu/Liberation generics
-    # render wider/narrower than Windows). These are multiplicative FACTORS (< 10),
-    # calibrated to FP Pro's font_preferences probe; the C++ hook treats values < 10 as
-    # factors. Generics bypass the whitelist/collapse so they are NOT self-calibrated.
-    # Windows/mac generics render native -> no compensation.
-    if sys.platform.startswith("linux"):
-        return _LINUX_GENERIC_FONT_FACTORS + metrics
-    return metrics
 
 
 def translate_profile_to_prefs(
@@ -606,15 +559,37 @@ def translate_profile_to_prefs(
     prefs["media.mediasource.webm.enabled"]   = profile.codec.mediasource_webm
     prefs["media.mediasource.mp4.enabled"]    = profile.codec.mediasource_mp4
 
-    # Fonts
-    prefs["zoom.stealth.font.whitelist"] = ",".join(profile.fonts)
-    prefs["zoom.stealth.font.metrics"]   = _font_metrics_for_platform(
-        profile._raw.get("font_metrics", "") or ""
-    )
-    # Reference string the binary sums the collapsed font's advances over to
-    # self-calibrate the per-host collapse base (turns the absolute widths in
-    # `metrics` into the right factor on any OS). See _font_metrics_for_platform.
-    prefs["zoom.stealth.font.calib_ref"] = _FONT_CALIB_REF
+    # Fonts — real bundled fonts (no collapse). The binary ships the real
+    # Windows font files in <GRE>/fonts and loads them via MOZ_BUNDLED_FONTS, so
+    # glyphs are genuine on every host. We expose this profile's family set via
+    # the per-profile fontlist, which the binary applies to the native system
+    # font allow-list AT CONSTRUCTION (no runtime rebuild → no scan stall), and
+    # force the system-ui generic to Segoe UI. profile.fonts is the _fpforge
+    # sample (core always + a conditioned optional subset). Per-profile metric
+    # uniqueness comes from the shared fpp.hw_seed jitter in the HarfBuzz shaper
+    # (set with the other fpp prefs), not from fabricated widths.
+    prefs["zoom.stealth.font.fontlist"] = ",".join(profile.fonts)
+    prefs["zoom.stealth.font.system_ui"] = "Segoe UI"
+
+    # Activate the bundled real-Windows fonts (MOZ_BUNDLED_FONTS / <GRE>/fonts).
+    prefs["gfx.bundled-fonts.activate"] = 1
+    # Point the CSS generics at Windows defaults. On a Windows HOST Firefox's
+    # built-in name-lists already resolve to these (and they're in the fontlist
+    # so they survive the allow-list); but on a non-Windows host (Linux/Mac) the
+    # built-in defaults name host fonts (DejaVu/Liberation/…) which the allow-list
+    # hides — so the generics would collapse. Setting them explicitly keeps the
+    # generics resolving to the bundled Windows families on EVERY host (system-ui
+    # is forced to Segoe UI by the C++ hook above, so it is not listed here).
+    prefs["font.name-list.serif.x-western"] = "Times New Roman"
+    prefs["font.name-list.sans-serif.x-western"] = "Arial"
+    prefs["font.name-list.monospace.x-western"] = "Consolas"
+    prefs["font.name-list.sans-serif.ja"] = "Yu Gothic UI"
+    prefs["font.name-list.serif.ja"] = "Yu Gothic UI"
+    prefs["font.name-list.sans-serif.ko"] = "Malgun Gothic"
+    prefs["font.name-list.serif.ko"] = "Malgun Gothic"
+    prefs["font.name-list.sans-serif.zh-CN"] = "Microsoft YaHei UI"
+    prefs["font.name-list.sans-serif.zh-TW"] = "Microsoft JhengHei UI"
+    prefs["font.name-list.sans-serif.zh-HK"] = "Microsoft JhengHei UI"
 
     # UI / dark mode + Windows colors palette (only when light theme).
     prefs["ui.systemUsesDarkTheme"] = int(profile.dark_theme)
@@ -628,6 +603,15 @@ def translate_profile_to_prefs(
     prefs["general.useragent.locale"]  = lang
     prefs["intl.locale.requested"]     = lang
     prefs["privacy.spoof_english"]     = 0
+    # juggler.locale.override seeds the BrowsingContext LanguageOverride FIELD in
+    # the parent process (BrowsingContext::Attach), whose DidSet drives BOTH
+    # navigator.languages (the full list) AND the realm Intl default locale (the
+    # primary tag it extracts) — so Intl.DateTimeFormat / NumberFormat /
+    # toLocaleString follow the locale, not just the Accept-Language header. Seed
+    # it with the full Accept-Language list so navigator.languages stays the
+    # desktop-default 2 elements (["fr-FR","fr"]); the C++ DidSet takes "fr-FR"
+    # for Intl. Mirrors juggler.timezone.override; the SOLE source of truth.
+    prefs["juggler.locale.override"]   = _accept_language(locale)
 
     if timezone:
         # juggler.timezone.override is the SOLE source of truth read by the C++

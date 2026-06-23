@@ -110,7 +110,7 @@ class InvisiblePlaywright:
         proxy: Optional[Dict[str, str]] = None,
         extra_args: Optional[list[str]] = None,
         humanize: Union[bool, float] = True,
-        locale: str = "en-US",
+        locale: str = "auto",
         timezone: str = "",
         extra_prefs: Optional[Dict[str, Any]] = None,
         binary_path: Optional[str] = None,
@@ -135,8 +135,15 @@ class InvisiblePlaywright:
                 into a Bezier trajectory with ~10 ms between waypoints.
                 Default ``True`` (~1.5 s max motion). ``False`` disables;
                 a float caps the motion in seconds.
-            locale: BCP-47 tag (e.g. ``"en-US"``). Drives the
-                ``Accept-Language`` header and ``navigator.language``.
+            locale: BCP-47 tag (e.g. ``"en-US"``) or ``"auto"`` (default).
+                ``"auto"`` derives the locale from the egress country — the proxy
+                egress IP, or the host's public IP without a proxy — exactly like
+                ``timezone="auto"``, keeping the browser language consistent with the
+                exit country (a French proxy → ``fr-FR``). Drives
+                ``intl.accept_languages`` → both ``navigator.language``/``languages``
+                AND the q-valued ``Accept-Language`` header (the patched binary builds
+                the header from the pref, never from the raw Playwright locale override,
+                so the two never diverge — see nsHttpHandler STEALTHFOX note).
             timezone: IANA zone (e.g. ``"America/New_York"``) — used as-is
                 when set, the only way to force a specific zone. ``""``
                 (default) or ``"auto"`` ALWAYS resolves from the egress IP:
@@ -199,11 +206,17 @@ class InvisiblePlaywright:
         _geo = prepare_session_geo(self._timezone, self._proxy)
         self._timezone = _geo.timezone
         self._webrtc_egress_ip = _geo.egress_ip
+        # Geo-aware locale: "auto" derives the language from the egress country (reusing
+        # the egress IP already discovered above), like timezone="auto". Keeps the browser
+        # language consistent with the proxy's country instead of a fixed en-US.
+        if (self._locale or "").strip().lower() == "auto":
+            from ._geo import resolve_session_locale
+            self._locale = resolve_session_locale(_geo.egress_ip, self._proxy)
         executable = self._binary_path or ensure_binary()
         prefs = self._build_prefs()
         playwright_proxy = _configure_proxy_shared(self._proxy, prefs)
         pw_headless = self._resolve_headless()
-        env = self._build_env()
+        env = self._build_env(prefs)
 
         try:
             self._pw = sync_playwright().start()
@@ -358,7 +371,7 @@ class InvisiblePlaywright:
             prefs["stealthfox.humanize.maxTime"] = str(self._humanize_max_seconds())
         return prefs
 
-    def _build_env(self) -> Dict[str, str]:
+    def _build_env(self, prefs: Dict[str, Any]) -> Dict[str, str]:
         """Env vars passed to the Firefox subprocess.
 
         ``TZ`` tunes the libc clock the content process reads for
@@ -369,11 +382,24 @@ class InvisiblePlaywright:
         a synthetic srflx candidate matching the proxy egress IP, avoiding
         the StaticPref IPC propagation timing issue between parent and
         socket processes.
+        ``STEALTHFOX_FONTLIST`` / ``STEALTHFOX_SYSTEMUI`` carry the font
+        allow-list + system-ui family for the SAME reason: the binary reads
+        them at the gfxPlatformFontList constructor (process start), but
+        Playwright delivers firefox_user_prefs over the juggler protocol
+        AFTER start — too late for the font list ctor. The env var is present
+        at start and inherited by content processes, so the allow-list is
+        applied on every host (without it, host fonts leak on Linux/macOS).
         """
         import os as _os
         env = _os.environ.copy()
         if self._timezone:
             env["TZ"] = _tz_env(self._timezone)
+        fontlist = prefs.get("zoom.stealth.font.fontlist")
+        if fontlist:
+            env["STEALTHFOX_FONTLIST"] = fontlist
+        system_ui = prefs.get("zoom.stealth.font.system_ui")
+        if system_ui:
+            env["STEALTHFOX_SYSTEMUI"] = system_ui
         # WebRTC srflx override: feed nICEr's nr_stealth_bridge the proxy egress
         # IP so the srflx candidate matches the proxy (not the real host the
         # UDP STUN would otherwise leak). An explicit env var set by the caller

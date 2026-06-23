@@ -42,8 +42,8 @@ _REQUIRED_PREFS_KEYS = (
     "media.encoder.webm.enabled",
     "media.mediasource.webm.enabled",
     "media.mediasource.mp4.enabled",
-    "zoom.stealth.font.whitelist",
-    "zoom.stealth.font.metrics",
+    "zoom.stealth.font.fontlist",
+    "zoom.stealth.font.system_ui",
     "ui.systemUsesDarkTheme",
     "intl.accept_languages",
     "general.useragent.locale",
@@ -197,23 +197,26 @@ def test_http_proxy_returned_unchanged_no_socks_mutations():
 
 
 # ──────────────────────────────────────────────────────────────────────
-#  IT7: profile.fonts reaches prefs as a comma-joined whitelist
+#  IT7: profile.fonts reaches prefs as a comma-joined fontlist
 # ──────────────────────────────────────────────────────────────────────
 
 
 @pytest.mark.integration
-def test_profile_fonts_propagate_to_prefs_whitelist():
+def test_profile_fonts_propagate_to_prefs_fontlist():
     """IT7 — every font in ``profile.fonts`` appears in the comma-joined
-    ``zoom.stealth.font.whitelist`` pref, in order."""
+    ``zoom.stealth.font.fontlist`` pref, in order. The binary applies this
+    list to the native system font allow-list at construction; system-ui is
+    forced to Segoe UI."""
     profile = generate_profile(seed=42)
     prefs = translate_profile_to_prefs(profile)
 
     assert profile.fonts, "fixture seed=42 produced empty fonts list"
-    whitelist = prefs["zoom.stealth.font.whitelist"]
-    assert isinstance(whitelist, str)
-    assert whitelist == ",".join(profile.fonts)
+    fontlist = prefs["zoom.stealth.font.fontlist"]
+    assert isinstance(fontlist, str)
+    assert fontlist == ",".join(profile.fonts)
     for font in profile.fonts:
-        assert font in whitelist
+        assert font in fontlist
+    assert prefs["zoom.stealth.font.system_ui"] == "Segoe UI"
 
 
 # ──────────────────────────────────────────────────────────────────────
@@ -357,23 +360,3 @@ def test_linux_msaa_pin_propagates_through_pipeline(monkeypatch):
     assert prefs["webgl.msaa-force"] is True
 
 
-# ──────────────────────────────────────────────────────────────────────
-#  IT13 (extra): Linux font metrics receive the GTK/DejaVu compensation
-#  block. End-to-end check that ``_LINUX_GENERIC_FONT_FACTORS`` is
-#  prepended to the per-font metrics string sampled from the profile.
-# ──────────────────────────────────────────────────────────────────────
-
-
-@pytest.mark.integration
-def test_linux_font_metrics_include_generic_factors(monkeypatch):
-    """IT13 — on Linux the font metrics pref starts with the generic
-    width-scale factors (GTK/DejaVu compensation) so glyph widths match
-    Windows. Without this, Linux sessions leak via metric drift."""
-    from invisible_playwright.prefs import _LINUX_GENERIC_FONT_FACTORS
-
-    monkeypatch.setattr(sys, "platform", "linux")
-    profile = generate_profile(seed=42)
-    prefs = translate_profile_to_prefs(profile)
-
-    metrics = prefs["zoom.stealth.font.metrics"]
-    assert metrics.startswith(_LINUX_GENERIC_FONT_FACTORS)

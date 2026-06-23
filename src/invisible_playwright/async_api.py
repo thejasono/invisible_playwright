@@ -48,7 +48,7 @@ class InvisiblePlaywright:
         proxy: Optional[Dict[str, str]] = None,
         extra_args: Optional[list[str]] = None,
         humanize: Union[bool, float] = True,
-        locale: str = "en-US",
+        locale: str = "auto",
         timezone: str = "",
         extra_prefs: Optional[Dict[str, Any]] = None,
         binary_path: Optional[str] = None,
@@ -90,6 +90,14 @@ class InvisiblePlaywright:
         )
         self._timezone = _geo.timezone
         self._webrtc_egress_ip = _geo.egress_ip
+        # Geo-aware locale: "auto" derives the language from the egress country (reusing
+        # the egress IP just discovered), like timezone="auto". Keeps the browser language
+        # consistent with the proxy's country instead of a fixed en-US.
+        if (self._locale or "").strip().lower() == "auto":
+            from ._geo import resolve_session_locale
+            self._locale = await asyncio.to_thread(
+                resolve_session_locale, _geo.egress_ip, self._proxy
+            )
         executable = self._binary_path or ensure_binary()
         prefs = translate_profile_to_prefs(
             self._profile,
@@ -113,7 +121,7 @@ class InvisiblePlaywright:
             prefs["stealthfox.humanize.maxTime"] = str(cap)
         playwright_proxy = _configure_proxy_shared(self._proxy, prefs)
         pw_headless = self._resolve_headless()
-        env = self._build_env()
+        env = self._build_env(prefs)
         try:
             self._pw = await async_playwright().start()
             if self._profile_dir is not None:
@@ -214,11 +222,21 @@ class InvisiblePlaywright:
                 pass
             self._virtual_display = None
 
-    def _build_env(self) -> Dict[str, str]:
+    def _build_env(self, prefs: Dict[str, Any]) -> Dict[str, str]:
         import os as _os
         env = _os.environ.copy()
         if self._timezone:
             env["TZ"] = _tz_env(self._timezone)
+        # Font allow-list + system-ui via env (read at the gfxPlatformFontList
+        # constructor, process start) — Playwright delivers firefox_user_prefs
+        # over the juggler protocol after start, too late for the font list ctor,
+        # so without this host fonts leak on Linux/macOS. See sync launcher.
+        fontlist = prefs.get("zoom.stealth.font.fontlist")
+        if fontlist:
+            env["STEALTHFOX_FONTLIST"] = fontlist
+        system_ui = prefs.get("zoom.stealth.font.system_ui")
+        if system_ui:
+            env["STEALTHFOX_SYSTEMUI"] = system_ui
         # WebRTC srflx override: feed nICEr's nr_stealth_bridge the proxy egress
         # IP (caller's explicit env var wins, else the IP auto-discovered in
         # __aenter__) and drop IPv6 from gathering behind a proxy.

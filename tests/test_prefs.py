@@ -5,9 +5,7 @@ import pytest
 
 from invisible_playwright._fpforge import generate_profile
 from invisible_playwright.prefs import (
-    _LINUX_GENERIC_FONT_FACTORS,
     _accept_language,
-    _font_metrics_for_platform,
     _WIN_LIGHT_COLORS,
     translate_profile_to_prefs,
 )
@@ -80,29 +78,6 @@ def test_accept_language_no_region():
 def test_accept_language_underscore_normalized():
     # AL3
     assert _accept_language("pt_BR") == "pt-BR, pt"
-
-
-# ──────────────────────────────────────────────────────────────────────
-#  _font_metrics_for_platform
-# ──────────────────────────────────────────────────────────────────────
-
-
-@pytest.mark.unit
-def test_font_metrics_windows_applies_named_factors(monkeypatch):
-    # FM2: Windows/mac apply the per-NAMED-font factors (so whitelisted named
-    # families don't collapse to the list-head width on the canvas measureText
-    # path), but WITHOUT the Linux generic-family compensation (generics bypass
-    # the whitelist and render native there).
-    monkeypatch.setattr(sys, "platform", "win32")
-    out = _font_metrics_for_platform("Arial|1.0,Verdana|0.9,")
-    assert out == "Arial|1.0,Verdana|0.9,"
-    assert "sans-serif|" not in out  # no generic compensation on Windows
-
-
-@pytest.mark.unit
-def test_font_metrics_empty_input_returns_empty():
-    # FM3: Empty input always returns "" regardless of platform.
-    assert _font_metrics_for_platform("") == ""
 
 
 # ──────────────────────────────────────────────────────────────────────
@@ -383,34 +358,6 @@ def test_lan_ip_seed_zero_has_no_zero_octets():
 #  ``sys.platform.startswith("linux")``. Patched via ``monkeypatch`` so
 #  these run on any host CI environment.
 # ──────────────────────────────────────────────────────────────────────
-
-
-@pytest.mark.unit
-def test_font_metrics_linux_prepends_generic_factors(monkeypatch):
-    # FM1: Linux prepends the GTK/DejaVu compensation block to the
-    # per-font metrics string sampled from the profile.
-    monkeypatch.setattr(sys, "platform", "linux")
-    out = _font_metrics_for_platform("Arial|1.0,Verdana|0.9,")
-    assert out.startswith(_LINUX_GENERIC_FONT_FACTORS)
-    assert out.endswith("Arial|1.0,Verdana|0.9,")
-
-
-@pytest.mark.unit
-def test_font_metrics_linux_empty_input_returns_empty(monkeypatch):
-    # FM1b: even on Linux, empty profile metrics short-circuits before
-    # the prepend so we never emit a metrics pref containing only the
-    # generic block (which would surface as a tampering signal).
-    monkeypatch.setattr(sys, "platform", "linux")
-    assert _font_metrics_for_platform("") == ""
-
-
-@pytest.mark.unit
-def test_font_metrics_linux2_variant_uses_linux_branch(monkeypatch):
-    # FM1c: ``sys.platform`` can be ``linux2`` on older Pythons / odd
-    # WSL builds. ``startswith("linux")`` accepts both.
-    monkeypatch.setattr(sys, "platform", "linux2")
-    out = _font_metrics_for_platform("Verdana|0.9,")
-    assert out.startswith(_LINUX_GENERIC_FONT_FACTORS)
 
 
 @pytest.mark.unit

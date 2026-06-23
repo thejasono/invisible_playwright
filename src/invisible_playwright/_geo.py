@@ -136,6 +136,56 @@ def ip_to_timezone(ip: str, mmdb_path: Any) -> str:
     return tz
 
 
+# ISO 3166 country code -> the primary BCP-47 locale a real Windows machine in that
+# country most commonly runs. Multi-language countries use the majority language; the
+# user can always force a specific locale instead of "auto". Unknown -> en-US.
+_COUNTRY_LOCALE = {
+    "US": "en-US", "GB": "en-GB", "CA": "en-CA", "AU": "en-AU", "NZ": "en-NZ", "IE": "en-IE",
+    "ZA": "en-ZA", "IN": "en-IN", "SG": "en-SG", "PH": "en-PH",
+    "FR": "fr-FR", "BE": "fr-BE", "LU": "fr-LU",
+    "DE": "de-DE", "AT": "de-AT", "CH": "de-CH",
+    "IT": "it-IT", "ES": "es-ES", "PT": "pt-PT", "NL": "nl-NL",
+    "SE": "sv-SE", "NO": "nb-NO", "DK": "da-DK", "FI": "fi-FI", "IS": "is-IS",
+    "PL": "pl-PL", "CZ": "cs-CZ", "SK": "sk-SK", "HU": "hu-HU", "RO": "ro-RO",
+    "GR": "el-GR", "BG": "bg-BG", "HR": "hr-HR", "RS": "sr-RS", "SI": "sl-SI",
+    "RU": "ru-RU", "UA": "uk-UA", "TR": "tr-TR", "IL": "he-IL",
+    "BR": "pt-BR", "MX": "es-MX", "AR": "es-AR", "CL": "es-CL", "CO": "es-CO", "PE": "es-PE",
+    "JP": "ja-JP", "KR": "ko-KR", "CN": "zh-CN", "TW": "zh-TW", "HK": "zh-HK",
+    "ID": "id-ID", "TH": "th-TH", "VN": "vi-VN", "MY": "ms-MY",
+    "SA": "ar-SA", "AE": "ar-AE", "EG": "ar-EG",
+}
+
+
+def ip_to_locale(ip: str, mmdb_path: Any) -> str:
+    """Map ``ip`` -> a BCP-47 locale via the MaxMind ``country.iso_code`` field, so the
+    browser language stays consistent with the proxy egress country. Falls back to
+    ``en-US`` for IPs absent from the DB or countries we don't map."""
+    import maxminddb
+
+    with maxminddb.open_database(str(mmdb_path)) as reader:
+        record = reader.get(ip)
+    cc = ""
+    if isinstance(record, dict):
+        cc = ((record.get("country") or {}).get("iso_code") or "")
+    return _COUNTRY_LOCALE.get(cc.upper(), "en-US")
+
+
+def resolve_session_locale(egress_ip: Optional[str], proxy: Optional[Dict[str, str]]) -> str:
+    """Resolve ``locale="auto"`` to a BCP-47 locale from the egress country. Behind a proxy
+    it reuses the already-discovered ``egress_ip`` (no extra round-trip); without a proxy it
+    discovers the host's public IP. On any failure it returns ``en-US`` (never breaks launch
+    — locale is cosmetic, unlike timezone which traps a foreign-proxy mismatch)."""
+    from .download import ensure_geoip_mmdb
+
+    try:
+        ip = egress_ip if _proxy_is_set(proxy) else discover_egress_ip(None)
+        if ip is None:
+            return "en-US"
+        return ip_to_locale(ip, ensure_geoip_mmdb())
+    except Exception:  # noqa: BLE001
+        return "en-US"
+
+
 class SessionGeo(NamedTuple):
     """Geo facts resolved once per session from a single egress round-trip.
 

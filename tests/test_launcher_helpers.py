@@ -181,7 +181,7 @@ def test_default_context_omits_locale_when_empty():
 def test_build_env_injects_webrtc_egress_when_discovered():
     ip = InvisiblePlaywright(seed=42)
     ip._webrtc_egress_ip = "203.0.113.9"  # what __enter__ resolves behind a proxy
-    env = ip._build_env()
+    env = ip._build_env({})
     assert env["STEALTHFOX_WEBRTC_PUBLIC_IP"] == "203.0.113.9"
     assert env["STEALTHFOX_WEBRTC_DISABLE_IPV6"] == "1"
 
@@ -191,7 +191,7 @@ def test_build_env_no_webrtc_keys_without_proxy(monkeypatch):
     monkeypatch.delenv("STEALTHFOX_WEBRTC_PUBLIC_IP", raising=False)
     ip = InvisiblePlaywright(seed=42)
     ip._webrtc_egress_ip = None  # no proxy → real STUN already truthful
-    env = ip._build_env()
+    env = ip._build_env({})
     assert "STEALTHFOX_WEBRTC_PUBLIC_IP" not in env
     assert "STEALTHFOX_WEBRTC_DISABLE_IPV6" not in env
 
@@ -201,6 +201,29 @@ def test_build_env_caller_env_override_wins(monkeypatch):
     monkeypatch.setenv("STEALTHFOX_WEBRTC_PUBLIC_IP", "198.51.100.5")
     ip = InvisiblePlaywright(seed=42)
     ip._webrtc_egress_ip = "203.0.113.9"  # auto-discovered
-    env = ip._build_env()
+    env = ip._build_env({})
     assert env["STEALTHFOX_WEBRTC_PUBLIC_IP"] == "198.51.100.5"  # caller wins
     assert env["STEALTHFOX_WEBRTC_DISABLE_IPV6"] == "1"
+
+
+@pytest.mark.unit
+def test_build_env_injects_font_list_and_system_ui():
+    # The binary reads these at the gfxPlatformFontList constructor (process
+    # start); Playwright delivers firefox_user_prefs over juggler AFTER start, so
+    # the env var is the only at-construction channel. Without it host fonts leak
+    # on Linux/macOS (the wrapper's pref-only delivery was a cross-OS gap).
+    ip = InvisiblePlaywright(seed=42)
+    env = ip._build_env({
+        "zoom.stealth.font.fontlist": "arial,calibri,segoe ui",
+        "zoom.stealth.font.system_ui": "Segoe UI",
+    })
+    assert env["STEALTHFOX_FONTLIST"] == "arial,calibri,segoe ui"
+    assert env["STEALTHFOX_SYSTEMUI"] == "Segoe UI"
+
+
+@pytest.mark.unit
+def test_build_env_no_font_keys_when_absent():
+    ip = InvisiblePlaywright(seed=42)
+    env = ip._build_env({})
+    assert "STEALTHFOX_FONTLIST" not in env
+    assert "STEALTHFOX_SYSTEMUI" not in env

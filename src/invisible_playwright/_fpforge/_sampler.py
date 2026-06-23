@@ -257,41 +257,31 @@ _NETWORK = Network([
 
 
 # ═══════════════════════════════════════════════════════════════════════
-#  FONT WHITELIST (Bayesian: core ∪ sampled_optional | gpu_class)
+#  FONT LIST (Bayesian: core ∪ sampled_optional | gpu_class)
 # ═══════════════════════════════════════════════════════════════════════
-# Semantic flip: previously exclude-list (block N probed fonts per seed).
-# Now whitelist (browser sees ONLY these fonts, everything else hidden).
+# The browser sees ONLY these families (everything else hidden) and renders
+# them from the REAL Windows font files the binary bundles in <GRE>/fonts
+# (MOZ_BUNDLED_FONTS). No fabricated widths: per-session metric uniqueness
+# comes from the HarfBuzz per-glyph jitter (shared fpp.hw_seed), not here.
 # Core (~112): always included — fresh Win11 + Office 2021 English.
-# Optional (~40): sampled per-session with P(present | gpu_class). Gives
-# small realistic variance (~3-8 optional fonts differ per session) while
-# keeping the profile strongly centered on 'typical Windows user'.
+# Optional (~40): one realistic Windows profile sampled per seed (weighted,
+# deterministic) → ~3-8 optional families differ per session while staying
+# centered on 'typical Windows user'.
 
 
 def derive_font_prefs(gpu_class: str, rng) -> Dict[str, str]:
-    """Build COHERENT whitelist + metrics strings for the session.
+    """Build the session's font family list.
 
     Profile-based (not per-font random):
-      - Core fonts always included (OS defaults + CSS-generic backers).
-      - Optional fonts come from ONE realistic Windows profile picked per seed
-        (weighted, deterministic). Metrics carry REAL per-family widths.
+      - Core families always included (OS defaults + CSS-generic backers).
+      - Optional families come from ONE realistic Windows profile picked per
+        seed (weighted, deterministic).
 
-    Returns:
-      {
-        "whitelist": "arial,calibri,marlett,...",
-        "metrics":   "arial|0.978,calibri|0.934,marlett|0.855,..."
-      }
-
-    The whitelist is the list of font families to advertise. The metrics
-    string encodes per-family width scale factors that the consumer can
-    use to make each family detectable by width-diff font probes.
-
-    Each entry in font_pool.json carries its own {name, factor} pair so the
-    two pref strings are GUARANTEED coherent — no chance of a fabricated
-    font with factor 1.0 (undetectable) or a metrics entry for a font not
-    in the whitelist (useless).
-
-    Markers & add-new-font: simply add an entry to font_pool.json:core (with
-    a factor at least 4% away from 1.0) — no special-case code needed.
+    Returns ``{"whitelist": "arial,calibri,marlett,..."}`` — the comma-joined
+    family list to advertise. The binary applies it to the native system font
+    allow-list AT CONSTRUCTION and renders each family from the bundled real
+    Windows file, so glyphs and widths are genuine. To add a family, just add
+    an entry to font_pool.json:core/optional — no special-case code needed.
     """
     # Profile-based (2026-06-18): pick ONE realistic Windows font profile (weighted,
     # deterministic per seed). Per-font random sampling is superseded — it produced
@@ -319,8 +309,8 @@ def derive_font_prefs(gpu_class: str, rng) -> Dict[str, str]:
     else:
         included.extend(_FONT_OPTIONAL)  # fallback (no profiles defined): all optional
     # Dedup by name (a profile may list a font that is also in core, e.g. after a
-    # standard font is promoted core→always-present) so the whitelist/metrics never
-    # carry a duplicate family.
+    # standard font is promoted core→always-present) so the list never carries a
+    # duplicate family.
     _seen: set = set()
     _uniq: list = []
     for e in included:
@@ -331,13 +321,7 @@ def derive_font_prefs(gpu_class: str, rng) -> Dict[str, str]:
     # Deterministic ordering: sort by name
     included.sort(key=lambda e: e["name"])
     whitelist = ",".join(e["name"] for e in included)
-    # Emit the UNIVERSAL real Windows width per font (host-independent value, same everywhere).
-    # prefs._font_metrics_for_platform divides by the per-platform collapse base to get the C++
-    # factor (measureText = base * factor = the exact Windows width on Windows/Linux/mac).
-    metrics = ",".join(
-        f'{e["name"]}|{e["width"]:.1f}' for e in included
-    )
-    return {"whitelist": whitelist, "metrics": metrics}
+    return {"whitelist": whitelist}
 
 
 # Back-compat shim: legacy callers still import derive_font_whitelist.

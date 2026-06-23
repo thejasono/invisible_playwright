@@ -185,6 +185,12 @@ def forced_gpu_class(seed: int) -> Optional[str]:
 # only on the retired amd/arc mix) → dropped. NVIDIA is the worst case, so these are clean on
 # amd/intel too. hw_seed = the canvas/WebGL gamma render hash (the dominant consistency-score
 # driver); host-calibrated.
+# 2026-06-21: with WebGL Option B (zoom.stealth.webgl.substitute_pixels, ON in prefs.py) the WebGL
+# render hash is hash(seed,idx) = HOST-INDEPENDENT, so this list NO LONGER needs per-host calibration
+# — it only supplies per-session diversity. A 2026-06-21 attempt to re-calibrate it per-host FAILED
+# cross-OS: hw_seed clean on Windows went dirty on the Linux GL backend (b008 0.034->0.839; Win-dirty
+# {7,11,20,27} = Linux-clean and vice-versa; + identity×hw_seed interaction on Linux). That proved
+# calibration can't work cross-host → substitution replaces it. Kept the original diverse 9-set.
 CLEAN_RENDER_SEEDS = [0, 5, 6, 9, 11, 16, 19, 20, 28]
 
 

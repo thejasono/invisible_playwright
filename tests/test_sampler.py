@@ -216,12 +216,15 @@ def test_screen_tier_4200x2000_is_ultrawide_via_width_branch():
 # ── derive_font_prefs / derive_font_whitelist ───────────────────────────
 
 @pytest.mark.unit
-def test_derive_font_prefs_returns_whitelist_and_metrics_keys():
-    """FP1 [HAPPY]: result has the two expected string keys."""
+def test_derive_font_prefs_returns_whitelist_key():
+    """FP1 [HAPPY]: result is a single-key dict with the font family list.
+
+    The per-family ``metrics`` string was removed on 2026-06-20: fonts now
+    render from the bundled real Windows files (genuine widths) and per-session
+    metric uniqueness comes from the HarfBuzz jitter, not fabricated factors."""
     out = derive_font_prefs("integrated_modern", random.Random(42))
-    assert set(out.keys()) == {"whitelist", "metrics"}
+    assert set(out.keys()) == {"whitelist"}
     assert isinstance(out["whitelist"], str)
-    assert isinstance(out["metrics"], str)
 
 
 @pytest.mark.unit
@@ -250,15 +253,6 @@ def test_derive_font_prefs_unknown_class_falls_back_to_integrated_modern():
 
 
 @pytest.mark.unit
-def test_derive_font_prefs_metrics_and_whitelist_are_coherent():
-    """FP5 [ECP]: every name in whitelist has a metrics entry and vice versa."""
-    out = derive_font_prefs("mid_range", random.Random(99))
-    wl_names = out["whitelist"].split(",")
-    metrics_names = [s.split("|", 1)[0] for s in out["metrics"].split(",")]
-    assert wl_names == metrics_names
-
-
-@pytest.mark.unit
 def test_derive_font_prefs_whitelist_alphabetically_sorted():
     """FP6 [ECP]: whitelist names are sorted (ordering invariant for stable dedup)."""
     out = derive_font_prefs("high_end", random.Random(5))
@@ -280,10 +274,12 @@ def test_derive_font_whitelist_legacy_shim_matches_dict_form():
 # machine never lacks them, so a session that drops one advertises a font set that
 # doesn't match any real Windows profile (image-dedup font probes then report a
 # short/degenerate name list → server-side OS-font-set checks fail). Calibri in
-# particular sat in `optional` (a bug); these five caused the detected set to come
-# up short on some seeds. Regression guard for the 2026-06-18 optional→core move.
+# particular sat in `optional` (a bug); these caused the detected set to come up
+# short on some seeds. Regression guard for the 2026-06-18 optional→core move.
+# NB: the exact Win11 family is "franklin gothic medium" (there is no bare
+# "franklin gothic" family); the 2026-06-20 bundle reconciliation uses real names.
 _STANDARD_WINDOWS_FONTS = [
-    "calibri", "franklin gothic", "gadugi", "javanese text", "myanmar text",
+    "calibri", "franklin gothic medium", "gadugi", "javanese text", "myanmar text",
 ]
 _ALL_GPU_CLASSES = [
     "integrated_old", "integrated_modern", "mid_range", "high_end",
@@ -294,16 +290,14 @@ _ALL_GPU_CLASSES = [
 @pytest.mark.unit
 @pytest.mark.parametrize("gpu_class", _ALL_GPU_CLASSES)
 def test_standard_windows_fonts_always_present_every_class_and_seed(gpu_class):
-    """FP7 [regression]: the standard-Windows fonts appear in BOTH whitelist and
-    metrics for every gpu_class across many seeds (i.e. they are core, not
-    profile-optional). Guards against a standard font silently becoming optional."""
+    """FP7 [regression]: the standard-Windows fonts appear in the whitelist for
+    every gpu_class across many seeds (i.e. they are core, not profile-optional).
+    Guards against a standard font silently becoming optional."""
     for seed in range(40):
         out = derive_font_prefs(gpu_class, random.Random(seed))
         wl = set(out["whitelist"].split(","))
-        metrics_names = {s.split("|", 1)[0] for s in out["metrics"].split(",")}
         for font in _STANDARD_WINDOWS_FONTS:
             assert font in wl, f"{font!r} missing from whitelist (class={gpu_class}, seed={seed})"
-            assert font in metrics_names, f"{font!r} missing from metrics (class={gpu_class}, seed={seed})"
 
 
 @pytest.mark.unit
@@ -320,33 +314,13 @@ def test_standard_windows_fonts_are_in_core_pool():
 @pytest.mark.unit
 @pytest.mark.parametrize("gpu_class", _ALL_GPU_CLASSES)
 def test_derive_font_prefs_no_duplicate_families(gpu_class):
-    """FP9 [regression]: no family appears twice in whitelist/metrics, even when a
+    """FP9 [regression]: no family appears twice in the whitelist, even when a
     profile's optional list also names a core font. Guards the dedup in
-    derive_font_prefs (a duplicate family would emit a malformed pref pair)."""
+    derive_font_prefs (a duplicate family would emit a malformed list)."""
     for seed in range(30):
         out = derive_font_prefs(gpu_class, random.Random(seed))
         wl = out["whitelist"].split(",")
-        metrics_names = [s.split("|", 1)[0] for s in out["metrics"].split(",")]
         assert len(wl) == len(set(wl)), f"duplicate in whitelist (class={gpu_class}, seed={seed})"
-        assert len(metrics_names) == len(set(metrics_names)), \
-            f"duplicate in metrics (class={gpu_class}, seed={seed})"
-
-
-@pytest.mark.unit
-@pytest.mark.parametrize("gpu_class", _ALL_GPU_CLASSES)
-def test_derive_font_prefs_named_fonts_emit_absolute_widths(gpu_class):
-    """FP10 [regression]: every emitted metrics value is a positive number; named
-    (non-generic) fonts carry an ABSOLUTE collapse-target width (>= 10), which the
-    binary self-calibrates per host. A value < 10 here would mean a font slipped
-    through as a bare multiplicative factor and would render at the wrong width."""
-    out = derive_font_prefs(gpu_class, random.Random(3))
-    for entry in out["metrics"].split(","):
-        name, _, val = entry.partition("|")
-        v = float(val.replace("px", ""))
-        assert v > 0.0, f"non-positive metrics value for {name!r}"
-        # the standard named fonts must be absolute (collapse-target) widths
-        if name in _STANDARD_WINDOWS_FONTS:
-            assert v >= 10.0, f"{name!r} emitted as factor {v} (<10), expected absolute width"
 
 
 # ── Forge / sample ──────────────────────────────────────────────────────
@@ -364,7 +338,7 @@ _EXPECTED_KEYS = {
     "av1_enabled", "webm_encoder_enabled",
     "mediasource_webm", "mediasource_mp4", "webspeech_synth",
     "storage_quota_mb", "dark_theme",
-    "font_whitelist", "font_metrics",
+    "font_whitelist",
 }
 
 
@@ -453,10 +427,9 @@ def test_forge_sample_avail_h_defaults_to_h_minus_40_when_missing(monkeypatch):
 
 @pytest.mark.unit
 def test_forge_sample_includes_font_keys():
-    """FS9 [ECP]: font_whitelist + font_metrics present and non-empty."""
+    """FS9 [ECP]: font_whitelist present and non-empty (the joined family list)."""
     out = sample(42)
     assert out["font_whitelist"]
-    assert out["font_metrics"]
     assert "," in out["font_whitelist"]    # at least the core fonts joined
 
 
