@@ -14,7 +14,17 @@ body:
     id: version
     attributes:
       label: Version
+      description: Output of `python -m invisible_playwright version`.
       placeholder: 0.1.7 (binary firefox-7)
+    validations:
+      required: true
+
+  - type: input
+    id: firefox_rev
+    attributes:
+      label: Firefox revision
+      description: The `firefox-N` tag the binary was built from (shown in the version output above).
+      placeholder: firefox-7
     validations:
       required: true
 
@@ -64,21 +74,6 @@ body:
       required: true
 
   - type: textarea
-    id: scores
-    attributes:
-      label: Detector verdict
-      description: Paste the relevant flags / scores verbatim. For Fingerprint Pro paste `bot`, `vpn`, `virtual_machine`, `tampering*`, `vm_ml_score`, `suspect_score`. For CreepJS the headless / lies / trust scores. For reCAPTCHA v3 the score number.
-      render: text
-      placeholder: |
-        bot: bad
-        vpn: true
-        virtual_machine: true
-        vm_ml_score: 0.74
-        suspect_score: 22
-    validations:
-      required: true
-
-  - type: textarea
     id: screenshot
     attributes:
       label: Screenshot of the detector result
@@ -89,8 +84,8 @@ body:
   - type: textarea
     id: snippet
     attributes:
-      label: How you launched
-      description: The InvisiblePlaywright launch + navigation that produced the result above. Redact creds.
+      label: Reproduction script
+      description: A complete, runnable script that opens the detector and produces the result above. Redact creds.
       render: python
       value: |
         from invisible_playwright import InvisiblePlaywright
@@ -99,6 +94,7 @@ body:
             ctx = browser.new_context()
             page = ctx.new_page()
             page.goto("https://demo.fingerprint.com/playground")
+            # add any extra steps needed to reach the flagged result
     validations:
       required: true
 
