@@ -27,7 +27,6 @@
 
 invisible_playwright spoofs **all the layers that matter, together, coherently**: Navigator, screen, GPU/WebGL, Canvas, fonts, audio, WebRTC, timezone, DevTools detection, SOCKS5 auth, and the rest. See [feder-cr/invisible_firefox](https://github.com/feder-cr/invisible_firefox) for the full per-layer breakdown of which C++ files are patched and why.
 
-Everything is driven by preferences - no hardcoded values in the binary. You change one pref, you change the spoofed value.
 
 ---
 
