@@ -137,7 +137,7 @@ with InvisiblePlaywright(proxy=proxy) as browser:
     ...
 ```
 
-Schemes supported: `socks5`, `socks4`, `http`, `https`. Auth works on all of them (SOCKS5 via patched `nsProtocolProxyService.cpp`, HTTP/HTTPS via Playwright). DNS is routed through the proxy by default, no local leak.
+Schemes supported: `socks5`, `socks4`, `http`, `https`. DNS is routed through the proxy by default, no local leak.
 
 ### Timezone
 
