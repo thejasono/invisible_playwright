@@ -30,7 +30,7 @@
 
 ## How it compares
 
-**CloakBrowser** ships a similar pitch for Chromium, but its binary is **closed source** (the source-level patches are not published, you only get the compiled output), and it still hits the Chromium reCAPTCHA ceiling. The commercial anti-detect browsers (**Multilogin**, **GoLogin**, AdsPower, Dolphin, Kameleo) are paid SaaS that overlay JS-layer spoofing on a patched Chromium. Managed profiles are nice but raw detection bypass sits below both Camoufox and us.
+**CloakBrowser** is closed source (patches not published) and hits the Chromium reCAPTCHA ceiling. **Multilogin**, **GoLogin**, AdsPower, Dolphin, Kameleo are paid SaaS running JS-layer spoofing on a patched Chromium.
 
 | | invisible_playwright | Camoufox | CloakBrowser | Multilogin |
 |---|---|---|---|---|
@@ -71,7 +71,7 @@ Supported platforms: **Windows x86_64**, **Linux x86_64 / arm64**, **macOS arm64
 + with InvisiblePlaywright() as browser:
 ```
 
-Every session gets a unique, coherent fingerprint drawn from real-world Firefox telemetry (GPU / audio / fonts / ~400 other fields) and Bezier-curve mouse motion baked into the browser itself.
+Every session gets a distinct fingerprint (GPU, audio, fonts, screen, ~400 fields) and Bezier-curve mouse motion.
 
 **Sync**
 ```python
@@ -95,19 +95,7 @@ async with InvisiblePlaywright(proxy={"server": "socks5://...", "username": "u",
 
 The `browser` object is a `playwright.sync_api.Browser` / `playwright.async_api.Browser` - every Playwright method works as-is.
 
----
-
-### Random fingerprint per session
-
-```python
-from invisible_playwright import InvisiblePlaywright
-
-with InvisiblePlaywright() as browser:
-    page = browser.new_page()
-    page.goto("https://creepjs-api.web.app")
-```
-
-Every call samples a new coherent profile. Log the seed to reproduce interesting runs:
+Log the seed to replay a run:
 
 ```python
 sf = InvisiblePlaywright()
@@ -188,9 +176,9 @@ invisible_playwright clear-cache    # remove all cached binaries
 
 Related projects that cover similar ground:
 
-- **[arkenfox/user.js](https://github.com/arkenfox/user.js)** - the canonical Firefox configuration for privacy/security hardening via prefs. Reading arkenfox is how you understand which `user.js` knobs matter; invisible_playwright goes further by patching the C++ source where prefs alone are insufficient (Canvas noise, WebGL parameter overrides, font whitelisting, WebRTC IP swap, DevTools detection bypass).
-- **[LibreWolf](https://librewolf.net)** - a Firefox fork bundled with sensible privacy defaults. Same audience, different distribution model: LibreWolf ships a configured Firefox binary, invisible_playwright ships source patches + a wrapper for automation.
-- **[Camoufox](https://github.com/daijro/camoufox)** - the most well-known open-source anti-detect Firefox project. We share design goals on the fingerprint-spoofing side; the implementation approach differs (Camoufox patches a wider surface and ships its own fingerprint database, while invisible_playwright sticks closer to vanilla and drives spoofing from a Bayesian sampler).
+- **[arkenfox/user.js](https://github.com/arkenfox/user.js)** - Firefox privacy hardening via prefs. invisible_playwright patches C++ where prefs are insufficient.
+- **[LibreWolf](https://librewolf.net)** - Firefox fork with privacy defaults. LibreWolf ships a configured binary; invisible_playwright ships source patches + automation wrapper.
+- **[Camoufox](https://github.com/daijro/camoufox)** - open-source anti-detect Firefox. Patches a wider surface and ships its own fingerprint database; invisible_playwright uses a Bayesian sampler.
 
 ---
 
