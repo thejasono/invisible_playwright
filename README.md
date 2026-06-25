@@ -23,9 +23,7 @@
 1. **JS patches are detectable.** Anti-bots enumerate native function `.toString()`, check descriptor configurability, compare property enumeration order, watch for prototype mutations. Every patch leaves a fingerprint of its own. CreepJS has an entire battery of "lies detectors" built around this.
 2. **Chromium itself is now suspect.** Forks can’t fully match Chrome: it ships closed-source components (Widevine, proprietary codecs, Safe Browsing) that flip detectable JS flags and network signals, and forks lag Chrome’s release cadence, leaving version-specific tells detectors lock onto.
 
-**invisible_playwright patches Firefox at the C++ level.** The spoofed values come back out through the normal Gecko paths - there is no JS shim, no override, no `Object.defineProperty`. **From the page's point of view, the browser is just telling the truth.** Anti-bot lie-detectors have nothing to latch onto.
-
-invisible_playwright spoofs **all the layers that matter, together, coherently**: Navigator, screen, GPU/WebGL, Canvas, fonts, audio, WebRTC, timezone, DevTools detection, SOCKS5 auth, and the rest. See [feder-cr/invisible_firefox](https://github.com/feder-cr/invisible_firefox) for the full per-layer breakdown of which C++ files are patched and why.
+**invisible_playwright patches Firefox at the C++ level** — no JS shim, no `Object.defineProperty`. Spoofed values come out through normal Gecko paths: Navigator, screen, GPU/WebGL, Canvas, fonts, audio, WebRTC, timezone, DevTools, SOCKS5. See [feder-cr/invisible_firefox](https://github.com/feder-cr/invisible_firefox) for the full breakdown.
 
 
 ---
