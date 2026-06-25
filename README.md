@@ -15,7 +15,7 @@
 ![invisible_playwright - 5/5 detection suites passed](docs/screenshots/hero.gif)
 
 
-## Why it's powerful
+## How it works
 
 
 **Most other anti-detect browsers patch Chromium at the JavaScript level** - they override `navigator`, `WebGLRenderingContext.getParameter`, canvas APIs, and so on via injected scripts. This has two fatal problems:
@@ -189,7 +189,7 @@ invisible_playwright clear-cache    # remove all cached binaries
 
 ## Related projects
 
-invisible_playwright takes a different angle than the major Firefox-hardening projects but stands on their shoulders:
+Related projects that cover similar ground:
 
 - **[arkenfox/user.js](https://github.com/arkenfox/user.js)** - the canonical Firefox configuration for privacy/security hardening via prefs. Reading arkenfox is how you understand which `user.js` knobs matter; invisible_playwright goes further by patching the C++ source where prefs alone are insufficient (Canvas noise, WebGL parameter overrides, font whitelisting, WebRTC IP swap, DevTools detection bypass).
 - **[LibreWolf](https://librewolf.net)** - a Firefox fork bundled with sensible privacy defaults. Same audience, different distribution model: LibreWolf ships a configured Firefox binary, invisible_playwright ships source patches + a wrapper for automation.
