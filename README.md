@@ -17,16 +17,18 @@
 
 ## How it works
 
+Most anti-detect browsers patch Chromium with injected JS, and it fails two ways:
 
-**Most other anti-detect browsers patch Chromium at the JavaScript level** - they override `navigator`, `WebGLRenderingContext.getParameter`, canvas APIs, and so on via injected scripts. This has two fatal problems:
+- **Detectable.** Every override leaves a seam: native `.toString()`, descriptors, prototype order, exactly what CreepJS reads.
+- **Chromium is suspect.** Forks drop closed-source parts and lag real Chrome.
 
-1. **JS patches are detectable.** Anti-bots enumerate native function `.toString()`, check descriptor configurability, compare property enumeration order, watch for prototype mutations. Every patch leaves a fingerprint of its own. CreepJS has an entire battery of "lies detectors" built around this.
-2. **Chromium itself is now suspect.** Forks can’t fully match Chrome: it ships closed-source components (Widevine, proprietary codecs, Safe Browsing) that flip detectable JS flags and network signals, and forks lag Chrome’s release cadence, leaving version-specific tells detectors lock onto.
+#### What invisible_playwright does
+It patches Firefox at the **C++ level**. The spoofed values come back through normal Gecko paths, so there is no JS shim to enumerate, no override, no `Object.defineProperty` to flag. Every layer is true at the source: `Navigator`, `screen`, `GPU/WebGL`, `Canvas`, `fonts`, `audio`, `WebRTC`, `timezone`, `DevTools`, `SOCKS5`. Nothing is injected into the page, so there is no surface for a detector to read, and the browser itself is no longer detectable as automation. It clears the suites other tools trip on: reCAPTCHA v3 in the human range, zero CreepJS lies. Full per-layer breakdown in [feder-cr/invisible_firefox](https://github.com/feder-cr/invisible_firefox).
 
-**invisible_playwright patches Firefox at the C++ level.** The spoofed values come back through normal Gecko paths - no JS shim, no override, no `Object.defineProperty`. From the page's point of view, the browser is just telling the truth. It spoofs all the layers that matter: Navigator, screen, GPU/WebGL, Canvas, fonts, audio, WebRTC, timezone, DevTools, SOCKS5. See [feder-cr/invisible_firefox](https://github.com/feder-cr/invisible_firefox) for the full per-layer breakdown.
+#### Still seeing captchas or anti-bot? It's the proxy.
+Once the browser is handled it stops being the variable. If you are still getting challenged, the tell is no longer the browser, it is the IP you come from. Around 90% of proxies are already flagged as proxies: datacenter ranges and oversold residential pools that anti-bot systems recognise on sight, before the page even runs a line of JS. A perfect browser on a flagged IP still loses.
 
-**The one thing the browser can't fix: the IP you come from.** A C++-perfect fingerprint still fails behind a flagged IP, and around 99% of proxies are already flagged as proxies, so anti-bot systems read the IP as a proxy no matter how real the browser looks. For the clean 1%, residential IPs that aren't flagged, we recommend [sx.org](https://sx.org/?c=invisible_playwright).
-
+> The fix is the clean 10%, residential IPs that aren't flagged. For those we recommend [sx.org](https://sx.org/?c=invisible_playwright), who filter for and serve only proxies that aren't flagged yet.
 
 ---
 
