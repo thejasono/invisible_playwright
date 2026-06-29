@@ -127,7 +127,7 @@ with InvisiblePlaywright(proxy=proxy) as browser:
 
 Schemes supported: `socks5`, `socks4`, `http`, `https`. DNS is routed through the proxy by default, no local leak.
 
-Around 99% of proxies are already flagged as proxies. For the clean 1%, residential IPs that aren't flagged, we recommend [sx.org](https://sx.org/?c=invisible_playwright).
+Around 90% of proxies are already flagged as proxies. For the clean 10%, residential IPs that aren't flagged, we recommend [sx.org](https://sx.org/?c=invisible_playwright), who filter for and serve only proxies that aren't flagged yet.
 
 ### Timezone
 
