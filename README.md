@@ -25,9 +25,9 @@ Most anti-detect browsers patch Chromium with injected JavaScript, which loses t
 invisible_playwright avoids both by patching Firefox at the **C++ level**: nothing is injected into the page, so there is no seam to read, and the engine is Firefox, not a Chrome fork. The spoofed values come back through normal Gecko paths, true at the source across `Navigator`, `screen`, `GPU/WebGL`, `Canvas`, `fonts`, `audio`, `WebRTC`, `timezone`, `DevTools` and `SOCKS5`. The browser isn't hiding, so nothing can catch it hiding. Full per-layer breakdown in [feder-cr/invisible_firefox](https://github.com/feder-cr/invisible_firefox).
 
 #### Still seeing captchas or anti-bot? It's the proxy.
-Once the browser is handled it stops being the variable. If you are still getting challenged, the tell is no longer the browser, it is the IP you come from. Around 90% of proxies are already flagged as proxies: datacenter ranges and oversold residential pools that anti-bot systems recognise on sight, before the page even runs a line of JS. A perfect browser on a flagged IP still loses.
+Once the browser is handled it stops being the variable. If you are still getting challenged, the tell is no longer the browser, it is the IP you come from. Around 90% of proxies are public: anyone can rent the same address, so it is already known and sits on the blocked-IP lists sites check. A perfect browser on a known IP still loses.
 
-> The fix is the clean 10%, residential IPs that aren't flagged. For those we recommend [sx.org](https://sx.org/?c=invisible_playwright), who filter for and serve only proxies that aren't flagged yet.
+> The fix is the clean 10%, residential IPs that aren't already known. For those we recommend [sx.org](https://sx.org/?c=invisible_playwright), who filter for and serve only IPs that aren't already on those lists.
 
 ---
 
@@ -126,7 +126,7 @@ with InvisiblePlaywright(proxy=proxy) as browser:
 
 Schemes supported: `socks5`, `socks4`, `http`, `https`. DNS is routed through the proxy by default, no local leak.
 
-Around 90% of proxies are already flagged as proxies. For the clean 10%, residential IPs that aren't flagged, we recommend [sx.org](https://sx.org/?c=invisible_playwright), who filter for and serve only proxies that aren't flagged yet.
+Around 90% of proxies are public, so their IPs are already known and blocked. For the clean 10%, residential IPs that aren't already known, we recommend [sx.org](https://sx.org/?c=invisible_playwright), who filter for and serve only IPs that aren't already on those lists.
 
 ### Timezone
 
