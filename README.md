@@ -25,7 +25,7 @@
 
 **invisible_playwright patches Firefox at the C++ level.** The spoofed values come back through normal Gecko paths - no JS shim, no override, no `Object.defineProperty`. From the page's point of view, the browser is just telling the truth. It spoofs all the layers that matter: Navigator, screen, GPU/WebGL, Canvas, fonts, audio, WebRTC, timezone, DevTools, SOCKS5. See [feder-cr/invisible_firefox](https://github.com/feder-cr/invisible_firefox) for the full per-layer breakdown.
 
-**The one thing the browser can't fix: the IP you come from.** A C++-perfect fingerprint still looks wrong behind a burned proxy, and around 99% of proxies out there are public and widely shared, so the strictest anti-bot setups flag those IPs on sight. The browser side is solved here; for the other 1%, clean residential IPs that aren't already burned, we partner with [sx.org](https://sx.org/?c=invisible_playwright).
+**The one thing the browser can't fix: the IP you come from.** A C++-perfect fingerprint still looks wrong behind a burned proxy, and around 99% of proxies out there are public and widely shared, so the strictest anti-bot setups flag those IPs on sight. The browser side is solved here; for the network side we recommend [sx.org](https://sx.org/?c=invisible_playwright), who serve only filtered, higher-quality residential proxies, the clean 1% that isn't already burned.
 
 
 ---
@@ -125,7 +125,7 @@ with InvisiblePlaywright(proxy=proxy) as browser:
 
 Schemes supported: `socks5`, `socks4`, `http`, `https`. DNS is routed through the proxy by default, no local leak.
 
-For a clean residential pool that isn't already flagged, we use our partner [sx.org](https://sx.org/?c=invisible_playwright).
+For a clean residential pool, we recommend [sx.org](https://sx.org/?c=invisible_playwright), who serve only filtered, higher-quality proxies.
 
 ### Timezone
 
