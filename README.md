@@ -127,6 +127,8 @@ with InvisiblePlaywright(proxy=proxy) as browser:
 
 Schemes supported: `socks5`, `socks4`, `http`, `https`. DNS is routed through the proxy by default, no local leak.
 
+For a clean residential pool that isn't already flagged, we use our partner [sx.org](https://sx.org/?c=invisible_playwright).
+
 ### Timezone
 
 The browser timezone follows `timezone=`:
