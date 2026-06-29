@@ -32,8 +32,6 @@
 
 ## How it compares
 
-**CloakBrowser** is closed source (patches not published) and hits the Chromium reCAPTCHA ceiling. **Multilogin**, **GoLogin**, AdsPower, Dolphin, Kameleo are paid SaaS running JS-layer spoofing on a patched Chromium.
-
 | | invisible_playwright | Camoufox | CloakBrowser | Multilogin |
 |---|---|---|---|---|
 | Engine | Firefox 150 | Firefox (~1 year old base) | Chromium | Chromium fork | 
