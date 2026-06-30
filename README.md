@@ -8,7 +8,7 @@
 
 # invisible_playwright
 
-**invisible_playwright is a Firefox modified at the C++ level to pass every bot detection test.**
+**A modified Firefox that passes every bot detection test.**
 
 ![invisible_playwright - 5/5 detection suites passed](docs/screenshots/hero.gif)
 
