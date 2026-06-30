@@ -8,7 +8,7 @@
 
 # invisible_playwright
 
-**Modified Firefox that beats bot detection.**
+**Modified Firefox that passes bot detection.**
 
 ![invisible_playwright - 5/5 detection suites passed](docs/screenshots/hero.gif)
 
