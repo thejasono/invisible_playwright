@@ -6,7 +6,7 @@
 [![browser launches](https://img.shields.io/github/downloads/feder-cr/invisible_firefox/usage-counter/total?label=browser%20launches&color=blue)](https://github.com/feder-cr/invisible_firefox/releases/tag/usage-counter)
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-Federico%20Elia-0A66C2?logo=linkedin&logoColor=white)](https://it.linkedin.com/in/federico-elia-5199951b6)
 
-# invisible_playwright - Modded Firefox that passes bot detection.
+# invisible_playwright - Modded Firefox that passes antibot
 
 ![invisible_playwright - 5/5 detection suites passed](docs/screenshots/hero.gif)
 
