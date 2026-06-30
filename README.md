@@ -10,7 +10,7 @@
 
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-Federico%20Elia-0A66C2?logo=linkedin&logoColor=white)](https://it.linkedin.com/in/federico-elia-5199951b6)
 
-**Stealth Firefox that passes every bot detection test. Drop-in Playwright replacement: fingerprint patched at the C++ level, and every action humanized so it looks like a real browser driven by a real person.**
+**invisible_playwright is a modified Firefox that passes every bot detection test. Drop-in Playwright replacement: fingerprint patched at the C++ level, and every action humanized so it looks like a real browser driven by a real person.**
 
 ![invisible_playwright - 5/5 detection suites passed](docs/screenshots/hero.gif)
 
