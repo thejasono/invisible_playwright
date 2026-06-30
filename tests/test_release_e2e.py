@@ -128,6 +128,16 @@ def test_clean_install_from_git_main(clean_venv: Path):
     url = f"git+{REPO_URL}@{REV}"
     _run([str(clean_venv), "-m", "pip", "install", url], timeout=600)
 
+    # Pin Playwright to the version the shipped binary's Juggler is built for.
+    # The wrapper's dependency is an open range, so an unpinned install in this
+    # venv silently drifts onto whatever pip resolves to. Upstream Playwright
+    # releases ship Juggler-protocol changes (e.g. Browser.setDefaultViewport in
+    # 1.61) the published binary does not speak, which breaks new_context. Force
+    # the blessed pin so this venv (reused by the launch test) tests the version
+    # users are expected to run, not a future incompatible release.
+    pin = (Path(__file__).resolve().parents[1] / "scripts" / "playwright_pin.txt").read_text().strip()
+    _run([str(clean_venv), "-m", "pip", "install", f"playwright=={pin}", "--quiet"], timeout=180)
+
     # Importability check — catches missing __init__ exports, broken syntax,
     # missing runtime deps.
     out = _run(
