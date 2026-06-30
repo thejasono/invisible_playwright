@@ -10,7 +10,7 @@
 
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-Federico%20Elia-0A66C2?logo=linkedin&logoColor=white)](https://it.linkedin.com/in/federico-elia-5199951b6)
 
-**invisible_playwright is a Firefox modified at the C++ level to pass every bot detection test, with humanized actions, so to any detector it is a real browser driven by a real person.**
+**invisible_playwright is a Firefox modified at the C++ level to pass every bot detection test.**
 
 ![invisible_playwright - 5/5 detection suites passed](docs/screenshots/hero.gif)
 
