@@ -16,12 +16,19 @@
 
 ## How it works
 
-Most anti-detect browsers patch Chromium with injected JavaScript, which loses two ways:
+Anti-bots ask two questions. invisible_playwright answers yes to both.
 
-- **The patch is detectable.** Every override leaves a seam, native `.toString()`, descriptor flags, prototype order, exactly what CreepJS reads.
-- **Chromium is suspect.** Forks drop closed-source parts and lag real Chrome.
+**1. Is this a real browser?** Yes. It is Firefox, patched at the C++ source level.
 
-invisible_playwright avoids both by patching Firefox at the **C++ level**: nothing is injected into the page, so there is no seam to read, and the engine is Firefox, not a Chrome fork. The spoofed values come back through normal Gecko paths, true at the source across `Navigator`, `screen`, `GPU/WebGL`, `Canvas`, `fonts`, `audio`, `WebRTC`, `timezone`, `DevTools` and `SOCKS5`. The browser isn't hiding, so nothing can catch it hiding. Full per-layer breakdown in [feder-cr/invisible_firefox](https://github.com/feder-cr/invisible_firefox).
+- Fingerprint set inside the engine, not injected into the page: Navigator, screen, GPU/WebGL, Canvas, fonts, audio, WebRTC, timezone, network.
+- No JS shim, no override, no seam to read.
+
+**2. Is a real person using it?** Yes. The actions are humanized in the driver.
+
+- Every click, hover and drag follows a natural mouse path with human timing, no teleporting cursor.
+- Each input is byte-identical to a real mouse: real input source, pressure, trusted events.
+
+Driven by the standard Playwright API. Full breakdown: [feder-cr/invisible_firefox](https://github.com/feder-cr/invisible_firefox).
 
 ---
 
