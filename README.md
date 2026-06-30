@@ -14,7 +14,6 @@
 
 ![invisible_playwright - 5/5 detection suites passed](docs/screenshots/hero.gif)
 
-
 ## How it works
 
 Most anti-detect browsers patch Chromium with injected JavaScript, which loses two ways:
@@ -23,24 +22,6 @@ Most anti-detect browsers patch Chromium with injected JavaScript, which loses t
 - **Chromium is suspect.** Forks drop closed-source parts and lag real Chrome.
 
 invisible_playwright avoids both by patching Firefox at the **C++ level**: nothing is injected into the page, so there is no seam to read, and the engine is Firefox, not a Chrome fork. The spoofed values come back through normal Gecko paths, true at the source across `Navigator`, `screen`, `GPU/WebGL`, `Canvas`, `fonts`, `audio`, `WebRTC`, `timezone`, `DevTools` and `SOCKS5`. The browser isn't hiding, so nothing can catch it hiding. Full per-layer breakdown in [feder-cr/invisible_firefox](https://github.com/feder-cr/invisible_firefox).
-
----
-
-## How it compares
-
-| | invisible_playwright | Camoufox | CloakBrowser | Multilogin |
-|---|---|---|---|---|
-| Engine | Firefox 150 | Firefox (~1 year old base) | Chromium | Chromium fork | 
-| Patch depth | C++ source | C++ source | C++ source  | JS overrides | 
-| Maintenance | Active | Gap (~1 year) | Active | Active SaaS | 
-| Open source | ✅ MIT | ✅ MPL | ❌ Closed source | ❌ Closed source | 
-| `.toString()` clean | ✅ | ✅ | ✅ | ❌ Detectable shims | 
-| Canvas / WebGL / Audio | ✅ C++ | ⚠️ Drift vs current FF | ✅ C++ | ⚠️ JS override |
-| SOCKS5 auth | ✅ Patched | ❌ | ⚠️ Playwright proxy | ⚠️ Varies | 
-| **reCAPTCHA v3 score** | **0.90** | ~0.3-0.5 | ~0.3-0.5 | ~0.3-0.6 | 
-| FP Pro - bot detected | ✅ Not detected | ❌ Detected | ❌ Detected | ❌ Detected | 
-| CreepJS lies | ✅ 0 | ❌ Multiple | ✅ 0 | ❌ Multiple | 
-| Cost | Free | Free | Free | From $99/mo | 
 
 ---
 
